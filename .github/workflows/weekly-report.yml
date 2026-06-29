@@ -1,0 +1,38 @@
+name: HAI Swimwear 週銷量報表
+
+on:
+  schedule:
+    # 每週一 01:00 UTC = 台灣時間 09:00 (UTC+8)
+    - cron: "0 1 * * 1"
+  workflow_dispatch:   # 允許手動觸發（測試用）
+
+jobs:
+  send-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run report generator
+        env:
+          SHOPIFY_STORE:        ${{ secrets.SHOPIFY_STORE }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+          GMAIL_USER:           ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD:   ${{ secrets.GMAIL_APP_PASSWORD }}
+          REPORT_RECIPIENT:     ${{ secrets.REPORT_RECIPIENT }}
+        run: python generate_report.py
+
+      - name: Commit updated report page
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "chore: update weekly sales report $(date -u +'%Y-%m-%d')"
+          git push

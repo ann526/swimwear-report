@@ -1,0 +1,6 @@
+# generate_report.py 只使用 Python 標準函式庫，無需額外套件
+# 若未來需要 OAuth2 Gmail 認證可加入：
+# google-auth
+# google-auth-oauthlib
+# google-auth-httplib2
+# google-api-python-client
