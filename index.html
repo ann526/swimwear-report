@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAI Swimwear · 週銷量報表</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0f172a;
+    --ink2: #475569;
+    --ink3: #94a3b8;
+    --surface: #f8f9fb;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --accent: #6366f1;
+    --accent-light: #eef2ff;
+    --accent2: #818cf8;
+    --top: #e0f2fe;
+    --top-text: #0369a1;
+    --bot: #fce7f3;
+    --bot-text: #9d174d;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--surface);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--ink);
+    color: #f8fafc;
+    padding: 20px 24px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(15,23,42,.18);
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .header-title { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+  .header-badge {
+    font-size: 10px; font-weight: 600; color: #64748b;
+    background: #1e293b; padding: 3px 8px; border-radius: 4px;
+  }
+  .week-tabs {
+    display: flex; gap: 3px; overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .week-tabs::-webkit-scrollbar { display: none; }
+  .week-tab {
+    padding: 8px 14px; border: none; border-radius: 6px 6px 0 0;
+    cursor: pointer; font-size: 12px; font-weight: 600;
+    white-space: nowrap; transition: all .15s;
+    background: transparent; color: #64748b;
+  }
+  .week-tab.active { background: var(--surface); color: var(--ink); }
+
+  /* ── Cat tabs ── */
+  .cat-bar {
+    background: var(--card); border-bottom: 1px solid var(--border);
+    padding: 0 24px; display: flex; gap: 2px; overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .cat-bar::-webkit-scrollbar { display: none; }
+  .cat-tab {
+    padding: 10px 14px; border: none; border-bottom: 2px solid transparent;
+    cursor: pointer; font-size: 13px; font-weight: 600;
+    white-space: nowrap; background: transparent; color: var(--ink3);
+    transition: all .15s;
+  }
+  .cat-tab.active { border-bottom-color: var(--accent); color: var(--accent); }
+
+  /* ── Filters ── */
+  .filters {
+    background: var(--card); border-bottom: 1px solid var(--border);
+    padding: 10px 24px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  }
+  .filter-input, .filter-select {
+    padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 12px; font-family: inherit; outline: none; background: var(--card);
+    color: var(--ink);
+  }
+  .filter-input { width: 130px; }
+  .size-btns { display: flex; gap: 3px; flex-wrap: wrap; }
+  .size-btn {
+    padding: 4px 9px; border: 1px solid var(--border); border-radius: 5px;
+    cursor: pointer; font-size: 11px; font-weight: 600;
+    background: var(--card); color: var(--ink2); font-family: inherit;
+    transition: all .15s;
+  }
+  .size-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .summary {
+    margin-left: auto; font-size: 13px; color: var(--ink2);
+    white-space: nowrap;
+  }
+  .summary b { color: var(--ink); }
+  .summary .hi { color: var(--accent); }
+
+  /* ── Items ── */
+  .list { padding: 14px 24px; display: flex; flex-direction: column; gap: 7px; }
+
+  .item-card {
+    background: var(--card); border-radius: 10px;
+    border: 1px solid var(--border); overflow: hidden;
+    transition: box-shadow .15s;
+  }
+  .item-card:hover { box-shadow: 0 2px 12px rgba(99,102,241,.08); }
+
+  .item-main {
+    padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+  }
+  .item-id { width: 110px; flex-shrink: 0; }
+  .item-code { font-weight: 700; font-size: 15px; }
+  .item-badge {
+    display: inline-block; margin-top: 3px;
+    padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700;
+  }
+  .item-bar { flex: 1; }
+  .bar-track {
+    height: 9px; background: #f1f5f9; border-radius: 5px; overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 5px; transition: width .4s ease;
+  }
+  .item-qty { width: 58px; text-align: right; flex-shrink: 0; }
+  .qty-num { font-weight: 800; font-size: 17px; }
+  .qty-unit { font-size: 11px; color: var(--ink3); margin-left: 2px; }
+  .item-tb { width: 100px; flex-shrink: 0; display: flex; gap: 5px; }
+  .tb-badge {
+    font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 700;
+  }
+  .tb-top { background: var(--top); color: var(--top-text); }
+  .tb-bot { background: var(--bot); color: var(--bot-text); }
+  .item-avg { width: 68px; flex-shrink: 0; text-align: right; }
+  .avg-label { font-size: 10px; color: var(--ink3); }
+  .avg-num { font-size: 13px; font-weight: 700; color: var(--ink2); }
+  .item-btns { display: flex; gap: 3px; flex-shrink: 0; }
+  .expand-btn {
+    padding: 3px 8px; border: 1px solid var(--border); border-radius: 5px;
+    cursor: pointer; font-size: 11px; font-weight: 600;
+    background: #f8f9fb; color: var(--ink2); font-family: inherit;
+    transition: all .15s;
+  }
+  .expand-btn.active {
+    background: var(--accent-light); border-color: var(--accent); color: var(--accent);
+  }
+
+  /* ── Expand panels ── */
+  .expand-panel {
+    border-top: 1px solid #f1f5f9; padding: 10px 16px; background: #fafafa;
+    display: none;
+  }
+  .expand-panel.open { display: block; }
+  .panel-label {
+    font-size: 10px; color: var(--ink3); font-weight: 700;
+    margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 11px; min-width: 64px; text-align: center;
+  }
+  .chip-num { font-weight: 800; font-size: 15px; }
+  .chip-label { font-size: 11px; color: var(--accent); font-weight: 700; }
+  .chip-pct { font-size: 10px; color: var(--ink3); }
+
+  /* ── Empty ── */
+  .empty {
+    text-align: center; padding: 60px; color: var(--ink3); font-size: 15px;
+  }
+
+  @media (max-width: 600px) {
+    .header { padding: 14px 16px 0; }
+    .list { padding: 12px 16px; }
+    .filters { padding: 8px 16px; }
+    .cat-bar { padding: 0 16px; }
+    .item-avg { display: none; }
+    .item-id { width: 90px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <span class="header-title">HAI Swimwear · 週銷量報表</span>
+    <span class="header-badge">Paid at · 台灣時間</span>
+  </div>
+  <div class="week-tabs" id="weekTabs"></div>
+</div>
+
+<div class="cat-bar" id="catBar"></div>
+
+<div class="filters">
+  <input class="filter-input" id="searchInput" placeholder="品項搜尋…" oninput="render()">
+  <select class="filter-select" id="colorSelect" onchange="render()">
+    <option value="">所有顏色</option>
+  </select>
+  <div class="size-btns" id="sizeBtns"></div>
+  <div class="summary" id="summary"></div>
+</div>
+
+<div class="list" id="itemList"></div>
+
+<div style="height:40px"></div>
+
+<script>
+const DB = {"weeks":["2026-06-01","2026-06-08","2026-06-15","2026-06-22"],"week_labels":{"2026-06-01":"6/1（週一）– 6/7（週日）","2026-06-08":"6/8（週一）– 6/14（週日）","2026-06-15":"6/15（週一）– 6/21（週日）","2026-06-22":"6/22（週一）– 6/28（週日）"},"data":{"2026-06-01":{"31303":{"cat":"泳裝配件","unit":"件","total":15,"T":0,"B":0,"colors":{"GN":5,"GP":4,"SW":3,"NV":2,"GB":1},"sizes":{"S":4,"M":7,"L":4}},"41504":{"cat":"Junior","unit":"件","total":5,"T":0,"B":5,"colors":{"JL":2,"JB":1,"JP":1,"JT":1},"sizes":{"S":1,"M":4}},"53G01":{"cat":"特殊洋裝","unit":"套","total":2,"T":0,"B":0,"colors":{"OB":2},"sizes":{"M":2}},"41102":{"cat":"正線一件式","unit":"套","total":21,"T":0,"B":0,"colors":{"PK":10,"SW":3,"NV":3,"BB":2,"GW":1,"DG":1,"OB":1},"sizes":{"S":5,"M":11,"L":2,"XL":3}},"61115":{"cat":"正線一件式","unit":"套","total":25,"T":0,"B":0,"colors":{"GN":13,"GP":8,"GB":4},"sizes":{"S":6,"M":10,"L":7,"XL":2}},"61109":{"cat":"正線一件式","unit":"套","total":11,"T":0,"B":0,"colors":{"GN":6,"GB":4,"GP":1},"sizes":{"S":3,"M":4,"L":4}},"41503":{"cat":"Junior","unit":"件","total":9,"T":0,"B":9,"colors":{"JB":5,"JY":2,"JW":1,"JT":1},"sizes":{"S":4,"M":4,"L":1}},"41502":{"cat":"Junior","unit":"件","total":11,"T":11,"B":0,"colors":{"JB":4,"JW":2,"JT":2,"JY":2,"JL":1},"sizes":{"S":11}},"41307":{"cat":"泳裝配件","unit":"件","total":10,"T":0,"B":0,"colors":{"PK":3,"GP":3,"GB":2,"GN":1,"SP":1},"sizes":{"F":10}},"41110":{"cat":"正線一件式","unit":"套","total":4,"T":0,"B":0,"colors":{"VS":2,"VG":1,"OG":1},"sizes":{"S":1,"M":3}},"51201":{"cat":"正線兩件式","unit":"套","total":6,"T":7,"B":6,"colors":{"NV":11,"SW":2},"sizes":{"XS":6,"S":5,"M":2}},"51203":{"cat":"正線兩件式","unit":"套","total":2,"T":2,"B":2,"colors":{"NV":4},"sizes":{"S":1,"M":1,"L":2}},"41501":{"cat":"Junior","unit":"件","total":16,"T":9,"B":7,"colors":{"JW":6,"JV":5,"JB":2,"JY":2,"JL":1},"sizes":{"S":9,"M":7}},"61111":{"cat":"正線一件式","unit":"套","total":3,"T":0,"B":0,"colors":{"SP":2,"DG":1},"sizes":{"S":1,"M":1,"XL":1}},"61214":{"cat":"正線兩件式","unit":"套","total":1,"T":1,"B":1,"colors":{"SP":2},"sizes":{"M":1,"XL":1}},"63404":{"cat":"洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"L":1}},"63410":{"cat":"洋裝","unit":"套","total":3,"T":0,"B":0,"colors":{"OB":3},"sizes":{"M":3}},"61303":{"cat":"泳裝配件","unit":"件","total":1,"T":0,"B":0,"colors":{"DG":1},"sizes":{"S":1}},"31106":{"cat":"正線一件式","unit":"套","total":2,"T":0,"B":0,"colors":{"GR":1,"EG":1},"sizes":{"S":1,"M":1}},"61213":{"cat":"正線兩件式","unit":"套","total":2,"T":2,"B":3,"colors":{"SP":3,"DG":2},"sizes":{"S":2,"L":2,"XL":1}},"63405":{"cat":"洋裝","unit":"套","total":2,"T":0,"B":0,"colors":{"OB":2},"sizes":{"S":1,"M":1}},"51106":{"cat":"正線一件式","unit":"套","total":9,"T":0,"B":0,"colors":{"BB":4,"PK":3,"NV":1,"SW":1},"sizes":{"S":7,"L":2}},"51102":{"cat":"正線一件式","unit":"套","total":1,"T":0,"B":0,"colors":{"LC":1},"sizes":{"S":1}},"33001":{"cat":"洋裝","unit":"套","total":2,"T":0,"B":0,"colors":{"BY":1,"WH":1},"sizes":{"S":1,"M":1}},"31209":{"cat":"正線兩件式","unit":"套","total":1,"T":1,"B":1,"colors":{"OB":2},"sizes":{"M":2}},"41105":{"cat":"正線一件式","unit":"套","total":1,"T":0,"B":0,"colors":{"TO":1},"sizes":{"M":1}},"41214":{"cat":"正線兩件式","unit":"套","total":0,"T":2,"B":0,"colors":{"PA":1,"NV":1},"sizes":{"S":2}},"31204":{"cat":"正線兩件式","unit":"套","total":2,"T":2,"B":5,"colors":{"SW":3,"MC":2,"NV":1,"LC":1},"sizes":{"S":1,"M":1,"L":3,"XL":2}},"41213":{"cat":"正線兩件式","unit":"套","total":0,"T":1,"B":0,"colors":{"LC":1},"sizes":{"M":1}},"53E01":{"cat":"特殊洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"S":1}},"43001":{"cat":"洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"L":1}}},"2026-06-08":{"53G02":{"cat":"特殊洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"HS":1},"sizes":{"M":1}},"51106":{"cat":"正線一件式","unit":"套","total":14,"T":0,"B":0,"colors":{"NV":6,"SW":5,"BB":2,"PK":1},"sizes":{"S":5,"M":4,"L":1,"XL":2,"XXL":2}},"41502":{"cat":"Junior","unit":"件","total":14,"T":14,"B":0,"colors":{"JB":6,"JP":3,"JT":2,"JW":2,"JL":1},"sizes":{"S":14}},"41504":{"cat":"Junior","unit":"件","total":9,"T":0,"B":9,"colors":{"JB":3,"JT":3,"JP":2,"JL":1},"sizes":{"S":2,"M":4,"L":3}},"63404":{"cat":"洋裝","unit":"套","total":6,"T":0,"B":0,"colors":{"OB":6},"sizes":{"S":3,"M":3}},"41102":{"cat":"正線一件式","unit":"套","total":11,"T":0,"B":0,"colors":{"PK":5,"SW":2,"BB":2,"NV":1,"DG":1},"sizes":{"S":3,"M":4,"L":2,"XL":2}},"61115":{"cat":"正線一件式","unit":"套","total":7,"T":0,"B":0,"colors":{"GB":3,"GN":2,"GP":2},"sizes":{"S":1,"M":2,"L":2,"XL":2}},"41503":{"cat":"Junior","unit":"件","total":7,"T":0,"B":7,"colors":{"JP":3,"JB":2,"JW":1,"JT":1},"sizes":{"S":3,"M":3,"L":1}},"31204":{"cat":"正線兩件式","unit":"套","total":3,"T":3,"B":5,"colors":{"SW":5,"MC":2,"TT":1},"sizes":{"S":2,"M":4,"L":2}},"51201":{"cat":"正線兩件式","unit":"套","total":5,"T":5,"B":6,"colors":{"NV":8,"SW":3},"sizes":{"XS":6,"S":4,"M":1}},"51203":{"cat":"正線兩件式","unit":"套","total":2,"T":3,"B":2,"colors":{"NV":3,"LC":1,"SW":1},"sizes":{"S":1,"L":1,"XL":3}},"61214":{"cat":"正線兩件式","unit":"套","total":6,"T":6,"B":8,"colors":{"SP":13,"DG":1},"sizes":{"S":1,"M":5,"L":5,"XL":2,"XXL":1}},"61302":{"cat":"泳裝配件","unit":"件","total":2,"T":0,"B":0,"colors":{"DG":2},"sizes":{"M":2}},"41105":{"cat":"正線一件式","unit":"套","total":5,"T":0,"B":0,"colors":{"MP":3,"TO":2},"sizes":{"L":4,"XL":1}},"31303":{"cat":"泳裝配件","unit":"件","total":13,"T":0,"B":0,"colors":{"GN":4,"GB":4,"NV":1,"SW":1,"MP":1,"EG":1,"SB":1},"sizes":{"S":1,"M":8,"L":4}},"41501":{"cat":"Junior","unit":"件","total":7,"T":3,"B":4,"colors":{"JT":2,"JY":2,"JB":1,"JP":1,"JW":1},"sizes":{"S":4,"M":3}},"41307":{"cat":"泳裝配件","unit":"件","total":12,"T":0,"B":0,"colors":{"NV":3,"EG":3,"GB":2,"GN":1,"PK":1,"SW":1,"MP":1},"sizes":{"F":12}},"61109":{"cat":"正線一件式","unit":"套","total":11,"T":0,"B":0,"colors":{"GN":6,"GB":4,"GP":1},"sizes":{"S":1,"M":3,"L":7}},"61106":{"cat":"正線一件式","unit":"套","total":6,"T":0,"B":0,"colors":{"EG":2,"GR":2,"PA":1,"MP":1},"sizes":{"S":3,"M":3}},"63410":{"cat":"洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"M":1}},"31106":{"cat":"正線一件式","unit":"套","total":1,"T":0,"B":0,"colors":{"PA":1},"sizes":{"XL":1}},"41107":{"cat":"正線一件式","unit":"套","total":2,"T":0,"B":0,"colors":{"NV":1,"SW":1},"sizes":{"M":1,"XL":1}},"61202":{"cat":"正線兩件式","unit":"套","total":1,"T":1,"B":2,"colors":{"EG":3},"sizes":{"L":3}},"61213":{"cat":"正線兩件式","unit":"套","total":2,"T":5,"B":2,"colors":{"SP":4,"DG":3},"sizes":{"S":1,"M":2,"L":2,"XL":1,"XXL":1}},"53E01":{"cat":"特殊洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"M":1}},"41101":{"cat":"正線一件式","unit":"套","total":1,"T":0,"B":0,"colors":{"GW":1},"sizes":{"XL":1}},"53G01":{"cat":"特殊洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"S":1}},"61111":{"cat":"正線一件式","unit":"套","total":4,"T":0,"B":0,"colors":{"DG":4},"sizes":{"S":1,"M":2,"L":1}},"33001":{"cat":"洋裝","unit":"套","total":2,"T":0,"B":0,"colors":{"BY":1,"OB":1},"sizes":{"M":1,"L":1}},"41110":{"cat":"正線一件式","unit":"套","total":1,"T":0,"B":0,"colors":{"VS":1},"sizes":{"M":1}},"61304":{"cat":"泳裝配件","unit":"件","total":2,"T":0,"B":0,"colors":{"SP":2},"sizes":{"M":2}},"61306":{"cat":"泳裝配件","unit":"件","total":1,"T":0,"B":0,"colors":{"SP":1},"sizes":{"S":1}},"51102":{"cat":"正線一件式","unit":"套","total":1,"T":0,"B":0,"colors":{"LC":1},"sizes":{"XL":1}},"63405":{"cat":"洋裝","unit":"套","total":3,"T":0,"B":0,"colors":{"OB":3},"sizes":{"S":2,"L":1}},"41214":{"cat":"正線兩件式","unit":"套","total":0,"T":1,"B":0,"colors":{"NV":1},"sizes":{"S":1}}},"2026-06-15":{"51106":{"cat":"正線一件式","unit":"套","total":25,"T":0,"B":0,"colors":{"NV":9,"SW":6,"PK":6,"BB":4},"sizes":{"S":10,"M":11,"L":4}},"41504":{"cat":"Junior","unit":"件","total":23,"T":0,"B":23,"colors":{"JY":6,"JL":6,"JB":5,"JP":3,"JT":2,"JW":1},"sizes":{"S":6,"M":12,"L":5}},"61111":{"cat":"正線一件式","unit":"套","total":3,"T":0,"B":0,"colors":{"DG":2,"SP":1},"sizes":{"M":1,"L":1,"XL":1}},"41501":{"cat":"Junior","unit":"件","total":15,"T":9,"B":6,"colors":{"JL":4,"JY":3,"JB":3,"JP":3,"JW":2},"sizes":{"S":13,"M":2}},"41105":{"cat":"正線一件式","unit":"套","total":2,"T":0,"B":0,"colors":{"TO":1,"MP":1},"sizes":{"S":1,"XL":1}},"41502":{"cat":"Junior","unit":"件","total":28,"T":28,"B":0,"colors":{"JB":8,"JY":7,"JT":5,"JW":5,"JL":2,"JP":1},"sizes":{"S":28}},"41107":{"cat":"正線一件式","unit":"套","total":10,"T":0,"B":0,"colors":{"SW":8,"NV":2},"sizes":{"S":6,"M":4}},"51201":{"cat":"正線兩件式","unit":"套","total":7,"T":7,"B":7,"colors":{"SW":8,"NV":6},"sizes":{"XS":2,"S":11,"M":1}},"61109":{"cat":"正線一件式","unit":"套","total":7,"T":0,"B":0,"colors":{"GB":4,"GN":3},"sizes":{"M":2,"L":5}},"61213":{"cat":"正線兩件式","unit":"套","total":6,"T":8,"B":6,"colors":{"SP":12,"DG":2},"sizes":{"S":1,"M":1,"L":6,"XL":6}},"41307":{"cat":"泳裝配件","unit":"件","total":23,"T":0,"B":0,"colors":{"NV":7,"SW":4,"SP":3,"PK":3,"BB":3,"GB":3},"sizes":{"F":23}},"63410":{"cat":"洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"S":1}},"61115":{"cat":"正線一件式","unit":"套","total":20,"T":0,"B":0,"colors":{"GB":7,"GP":5,"NV":5,"GN":3},"sizes":{"S":4,"M":9,"L":4,"XL":3}},"31303":{"cat":"泳裝配件","unit":"件","total":16,"T":0,"B":0,"colors":{"GB":6,"NV":4,"SW":2,"BB":1,"EG":1,"GP":1,"GN":1},"sizes":{"S":3,"M":7,"L":6}},"41102":{"cat":"正線一件式","unit":"套","total":25,"T":0,"B":0,"colors":{"NV":8,"PK":7,"SW":6,"DG":2,"BB":1,"GW":1},"sizes":{"S":7,"M":9,"L":1,"XL":7,"XXL":1}},"61302":{"cat":"泳裝配件","unit":"件","total":4,"T":0,"B":0,"colors":{"DG":4},"sizes":{"S":2,"M":1,"L":1}},"41503":{"cat":"Junior","unit":"件","total":15,"T":0,"B":15,"colors":{"JT":4,"JB":4,"JW":4,"JL":2,"JP":1},"sizes":{"S":6,"M":9}},"61214":{"cat":"正線兩件式","unit":"套","total":6,"T":6,"B":6,"colors":{"SP":10,"DG":2},"sizes":{"S":2,"L":4,"XL":6}},"43001":{"cat":"洋裝","unit":"套","total":3,"T":0,"B":0,"colors":{"OB":3},"sizes":{"S":2,"L":1}},"41110":{"cat":"正線一件式","unit":"套","total":9,"T":0,"B":0,"colors":{"SW":4,"NV":2,"OG":2,"VG":1},"sizes":{"S":5,"M":3,"L":1}},"63405":{"cat":"洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"S":1}},"31204":{"cat":"正線兩件式","unit":"套","total":2,"T":2,"B":5,"colors":{"LC":4,"MC":2,"SW":1},"sizes":{"S":2,"M":2,"L":2,"XL":1}},"33001":{"cat":"洋裝","unit":"套","total":2,"T":0,"B":0,"colors":{"OB":2},"sizes":{"S":2}},"53G01":{"cat":"特殊洋裝","unit":"套","total":2,"T":0,"B":0,"colors":{"OB":2},"sizes":{"S":2}},"51203":{"cat":"正線兩件式","unit":"套","total":1,"T":2,"B":1,"colors":{"NV":2,"LC":1},"sizes":{"L":2,"XL":1}},"41214":{"cat":"正線兩件式","unit":"套","total":2,"T":3,"B":2,"colors":{"HS":3,"PA":2},"sizes":{"XS":1,"S":4}},"63404":{"cat":"洋裝","unit":"套","total":2,"T":0,"B":0,"colors":{"OB":2},"sizes":{"M":2}},"41207":{"cat":"正線兩件式","unit":"套","total":0,"T":0,"B":1,"colors":{"HS":1},"sizes":{"M":1}},"41213":{"cat":"正線兩件式","unit":"套","total":1,"T":1,"B":1,"colors":{"LC":1,"HS":1},"sizes":{"S":1,"M":1}},"63501":{"cat":"洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"L":1}},"61106":{"cat":"正線一件式","unit":"套","total":1,"T":0,"B":0,"colors":{"EG":1},"sizes":{"S":1}},"61306":{"cat":"泳裝配件","unit":"件","total":1,"T":0,"B":0,"colors":{"DG":1},"sizes":{"L":1}},"53G02":{"cat":"特殊洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"HS":1},"sizes":{"M":1}},"43302":{"cat":"洋裝","unit":"套","total":2,"T":0,"B":0,"colors":{"NV":2},"sizes":{"M":2}},"31106":{"cat":"正線一件式","unit":"套","total":2,"T":0,"B":0,"colors":{"GR":1,"EG":1},"sizes":{"M":2}},"61202":{"cat":"正線兩件式","unit":"套","total":2,"T":2,"B":2,"colors":{"MP":2,"PA":2},"sizes":{"S":2,"M":2}},"41109":{"cat":"正線一件式","unit":"套","total":1,"T":0,"B":0,"colors":{"TO":1},"sizes":{"M":1}}},"2026-06-22":{"61115":{"cat":"正線一件式","unit":"套","total":38,"T":0,"B":0,"colors":{"NV":13,"GN":9,"GB":7,"GP":6,"SW":3},"sizes":{"S":4,"M":20,"L":12,"XL":2}},"41307":{"cat":"泳裝配件","unit":"件","total":30,"T":0,"B":0,"colors":{"NV":7,"GN":6,"GB":5,"SW":4,"BB":3,"SP":3,"GP":1,"PK":1},"sizes":{"F":30}},"31303":{"cat":"泳裝配件","unit":"件","total":28,"T":0,"B":0,"colors":{"GB":7,"GN":7,"NV":5,"SW":5,"GP":3,"EG":1},"sizes":{"S":7,"M":14,"L":7}},"41502":{"cat":"Junior","unit":"件","total":27,"T":27,"B":0,"colors":{"JT":8,"JW":5,"JY":5,"JP":4,"JB":3,"JL":2},"sizes":{"S":27}},"51106":{"cat":"正線一件式","unit":"套","total":19,"T":0,"B":0,"colors":{"NV":6,"SW":5,"PK":5,"BB":2,"MC":1},"sizes":{"XS":1,"S":4,"M":11,"L":2,"XL":1}},"41503":{"cat":"Junior","unit":"件","total":19,"T":0,"B":19,"colors":{"JT":7,"JW":4,"JY":3,"JL":2,"JB":2,"JP":1},"sizes":{"S":5,"M":10,"L":4}},"41501":{"cat":"Junior","unit":"件","total":19,"T":8,"B":11,"colors":{"JT":7,"JV":4,"JY":3,"JP":2,"JB":2,"JL":1},"sizes":{"S":12,"M":7}},"41102":{"cat":"正線一件式","unit":"套","total":18,"T":0,"B":0,"colors":{"SW":5,"PK":5,"NV":3,"DG":3,"BB":1,"SP":1},"sizes":{"S":3,"M":7,"L":3,"XL":4,"XXL":1}},"61109":{"cat":"正線一件式","unit":"套","total":17,"T":0,"B":0,"colors":{"GN":11,"GB":5,"GP":1},"sizes":{"S":2,"M":12,"L":3}},"41504":{"cat":"Junior","unit":"件","total":13,"T":0,"B":13,"colors":{"JP":4,"JB":3,"JL":3,"JY":1,"JW":1,"JT":1},"sizes":{"S":1,"M":3,"L":9}},"61213":{"cat":"正線兩件式","unit":"套","total":11,"T":14,"B":11,"colors":{"SP":18,"DG":7},"sizes":{"S":9,"M":3,"L":10,"XL":1,"XXL":2}},"61111":{"cat":"正線一件式","unit":"套","total":9,"T":0,"B":0,"colors":{"DG":7,"SP":2},"sizes":{"S":2,"M":5,"L":1,"XL":1}},"41110":{"cat":"正線一件式","unit":"套","total":9,"T":0,"B":0,"colors":{"SW":4,"NV":2,"VS":1,"VP":1,"OG":1},"sizes":{"S":3,"M":5,"L":1}},"63404":{"cat":"洋裝","unit":"套","total":8,"T":0,"B":0,"colors":{"OB":6,"GW":2},"sizes":{"S":1,"M":4,"L":1,"XL":2}},"51201":{"cat":"正線兩件式","unit":"套","total":7,"T":9,"B":7,"colors":{"NV":9,"SW":7},"sizes":{"XS":1,"S":6,"M":9}},"61214":{"cat":"正線兩件式","unit":"套","total":6,"T":6,"B":13,"colors":{"SP":19},"sizes":{"S":3,"M":2,"L":11,"XL":2,"XXL":1}},"61303":{"cat":"泳裝配件","unit":"件","total":6,"T":0,"B":0,"colors":{"SP":3,"DG":3},"sizes":{"S":1,"M":2,"XL":3}},"51203":{"cat":"正線兩件式","unit":"套","total":4,"T":4,"B":4,"colors":{"NV":6,"LC":1,"SW":1},"sizes":{"S":2,"M":2,"L":2,"XL":2}},"41107":{"cat":"正線一件式","unit":"套","total":4,"T":0,"B":0,"colors":{"NV":2,"SW":2},"sizes":{"S":2,"M":1,"L":1}},"41105":{"cat":"正線一件式","unit":"套","total":3,"T":0,"B":0,"colors":{"MP":1,"EG":1,"TO":1},"sizes":{"XS":1,"L":1,"XL":1}},"61306":{"cat":"泳裝配件","unit":"件","total":3,"T":0,"B":0,"colors":{"SP":3},"sizes":{"S":2,"M":1}},"61304":{"cat":"泳裝配件","unit":"件","total":2,"T":0,"B":0,"colors":{"SP":1,"DG":1},"sizes":{"S":1,"M":1}},"61106":{"cat":"正線一件式","unit":"套","total":2,"T":0,"B":0,"colors":{"EG":1,"GR":1},"sizes":{"S":1,"XL":1}},"41109":{"cat":"正線一件式","unit":"套","total":2,"T":0,"B":0,"colors":{"TO":2},"sizes":{"S":1,"L":1}},"43001":{"cat":"洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"S":1}},"31204":{"cat":"正線兩件式","unit":"套","total":1,"T":1,"B":2,"colors":{"SW":2,"LC":1},"sizes":{"S":1,"M":1,"L":1}},"61202":{"cat":"正線兩件式","unit":"套","total":1,"T":1,"B":1,"colors":{"EG":2},"sizes":{"XL":2}},"41214":{"cat":"正線兩件式","unit":"套","total":1,"T":1,"B":1,"colors":{"HS":2},"sizes":{"XS":2}},"41213":{"cat":"正線兩件式","unit":"套","total":1,"T":1,"B":1,"colors":{"LC":2},"sizes":{"M":2}},"41207":{"cat":"正線兩件式","unit":"套","total":0,"T":0,"B":1,"colors":{"HS":1},"sizes":{"M":1}}}}};
+
+const SIZE_ORDER = ["XS","S","M","L","XL","XXL","F"];
+const CAT_TABS = ["全部","泳裝正線","Junior線","泳裝配件","洋裝"];
+const CAT_MAP = {"全部":null,"泳裝正線":["正線一件式","正線兩件式"],"Junior線":["Junior"],"泳裝配件":["泳裝配件"],"洋裝":["洋裝","特殊洋裝"]};
+const BADGE = {
+  "正線一件式":{l:"一件式",bg:"#dbeafe",c:"#1e40af"},
+  "正線兩件式":{l:"兩件式",bg:"#ede9fe",c:"#5b21b6"},
+  "Junior":{l:"Junior",bg:"#fce7f3",c:"#9d174d"},
+  "泳裝配件":{l:"配件",bg:"#d1fae5",c:"#065f46"},
+  "洋裝":{l:"洋裝",bg:"#fef3c7",c:"#92400e"},
+  "特殊洋裝":{l:"特殊洋裝",bg:"#ffedd5",c:"#9a3412"},
+};
+
+let curWeek = DB.weeks[DB.weeks.length - 1];
+let curCat = "全部";
+let curSize = "";
+let expanded = {};
+
+// Build week tabs
+const weekTabsEl = document.getElementById('weekTabs');
+DB.weeks.forEach(w => {
+  const btn = document.createElement('button');
+  btn.className = 'week-tab' + (w === curWeek ? ' active' : '');
+  btn.textContent = DB.week_labels[w];
+  btn.onclick = () => { curWeek = w; expanded = {}; updateWeekTabs(); render(); };
+  weekTabsEl.appendChild(btn);
+});
+
+function updateWeekTabs() {
+  weekTabsEl.querySelectorAll('.week-tab').forEach((btn, i) => {
+    btn.classList.toggle('active', DB.weeks[i] === curWeek);
+  });
+}
+
+// Build cat tabs
+const catBarEl = document.getElementById('catBar');
+CAT_TABS.forEach(t => {
+  const btn = document.createElement('button');
+  btn.className = 'cat-tab' + (t === curCat ? ' active' : '');
+  btn.textContent = t;
+  btn.onclick = () => { curCat = t; updateCatTabs(); render(); };
+  catBarEl.appendChild(btn);
+});
+
+function updateCatTabs() {
+  catBarEl.querySelectorAll('.cat-tab').forEach((btn, i) => {
+    btn.classList.toggle('active', CAT_TABS[i] === curCat);
+  });
+}
+
+// Build size buttons
+const sizeBtnsEl = document.getElementById('sizeBtns');
+["","XS","S","M","L","XL","XXL","F"].forEach(sz => {
+  const btn = document.createElement('button');
+  btn.className = 'size-btn' + (sz === curSize ? ' active' : '');
+  btn.textContent = sz || '全';
+  btn.onclick = () => { curSize = sz; updateSizeBtns(); render(); };
+  sizeBtnsEl.appendChild(btn);
+});
+
+function updateSizeBtns() {
+  sizeBtnsEl.querySelectorAll('.size-btn').forEach((btn, i) => {
+    const sizes = ["","XS","S","M","L","XL","XXL","F"];
+    btn.classList.toggle('active', sizes[i] === curSize);
+  });
+}
+
+function getItems() {
+  const weekData = DB.data[curWeek] || {};
+  const cats = CAT_MAP[curCat];
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const colorF = document.getElementById('colorSelect').value;
+
+  return Object.entries(weekData)
+    .filter(([ic, d]) => {
+      if (cats && !cats.includes(d.cat)) return false;
+      if (search && !ic.toLowerCase().includes(search)) return false;
+      if (colorF && !d.colors[colorF]) return false;
+      if (curSize && !d.sizes[curSize]) return false;
+      return true;
+    })
+    .map(([ic, d]) => ({ ic, ...d }))
+    .sort((a, b) => b.total - a.total);
+}
+
+function updateColorSelect() {
+  const weekData = DB.data[curWeek] || {};
+  const colors = new Set();
+  Object.values(weekData).forEach(d => Object.keys(d.colors).forEach(c => colors.add(c)));
+  const sel = document.getElementById('colorSelect');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">所有顏色</option>';
+  [...colors].sort().forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    if (c === cur) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function render() {
+  updateColorSelect();
+  const items = getItems();
+  const grandTotal = items.reduce((s, d) => s + d.total, 0);
+  const maxTotal = Math.max(...items.map(d => d.total), 1);
+
+  document.getElementById('summary').innerHTML =
+    `<b>${items.length}</b> 款・合計 <b class="hi">${grandTotal}</b> 件/套・日均 <b>${(grandTotal/7).toFixed(1)}</b>`;
+
+  const list = document.getElementById('itemList');
+  if (items.length === 0) {
+    list.innerHTML = '<div class="empty">沒有符合條件的品項</div>';
+    return;
+  }
+
+  list.innerHTML = items.map(d => {
+    const badge = BADGE[d.cat] || {l:d.cat,bg:"#f1f5f9",c:"#475569"};
+    const isTwo = d.cat === "正線兩件式";
+    const isJr = d.cat === "Junior";
+    const barPct = (d.total / maxTotal * 100).toFixed(1);
+    const expC = expanded[d.ic + '_c'];
+    const expS = expanded[d.ic + '_s'];
+
+    const colorF = document.getElementById('colorSelect').value;
+    const colorEntries = colorF
+      ? Object.entries(d.colors).filter(([c]) => c === colorF)
+      : Object.entries(d.colors).sort((a,b) => b[1]-a[1]);
+    const sizeEntries = curSize
+      ? Object.entries(d.sizes).filter(([s]) => s === curSize)
+      : Object.entries(d.sizes).sort((a,b) => SIZE_ORDER.indexOf(a[0]) - SIZE_ORDER.indexOf(b[0]));
+
+    const tbHtml = (isTwo || isJr) ? `
+      <div class="item-tb">
+        <span class="tb-badge tb-top">上 ${d.T}</span>
+        <span class="tb-badge tb-bot">下 ${d.B}</span>
+      </div>` : '';
+
+    const colorChips = colorEntries.map(([c, qty]) => `
+      <div class="chip">
+        <div class="chip-num">${qty}</div>
+        <div class="chip-label">${c}</div>
+      </div>`).join('');
+
+    const sizeChips = sizeEntries.map(([sz, qty]) => {
+      const pct = d.total > 0 ? Math.round(qty / d.total * 100) : 0;
+      return `<div class="chip">
+        <div class="chip-num">${qty}</div>
+        <div class="chip-label">${sz}</div>
+        <div class="chip-pct">${pct}%</div>
+      </div>`;
+    }).join('');
+
+    return `
+    <div class="item-card">
+      <div class="item-main">
+        <div class="item-id">
+          <div class="item-code">${d.ic}</div>
+          <span class="item-badge" style="background:${badge.bg};color:${badge.c}">${badge.l}</span>
+        </div>
+        <div class="item-bar">
+          <div class="bar-track"><div class="bar-fill" style="width:${barPct}%"></div></div>
+        </div>
+        <div class="item-qty">
+          <span class="qty-num">${d.total}</span><span class="qty-unit">${d.unit}</span>
+        </div>
+        ${tbHtml}
+        <div class="item-avg">
+          <div class="avg-label">日均</div>
+          <div class="avg-num">${(d.total/7).toFixed(2)}</div>
+        </div>
+        <div class="item-btns">
+          <button class="expand-btn ${expC?'active':''}" onclick="toggle('${d.ic}','c')">顏色</button>
+          <button class="expand-btn ${expS?'active':''}" onclick="toggle('${d.ic}','s')">尺寸</button>
+        </div>
+      </div>
+      <div class="expand-panel ${expC?'open':''}">
+        <div class="panel-label">顏色銷量（本週）</div>
+        <div class="chips">${colorChips}</div>
+      </div>
+      <div class="expand-panel ${expS?'open':''}">
+        <div class="panel-label">尺寸銷量（本週）</div>
+        <div class="chips">${sizeChips}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggle(ic, key) {
+  expanded[ic + '_' + key] = !expanded[ic + '_' + key];
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
