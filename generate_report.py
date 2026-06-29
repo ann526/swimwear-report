@@ -36,8 +36,11 @@ CATEGORY_NAMES = {
     "regular_two_piece":  "泳裝正線・兩件式",
     "junior":             "泳裝 Junior 線",
     "dress":              "洋裝 / Cover-up",
-    "other":              "其他配件",
+    "accessory":          "泳裝配件",
 }
+
+# 報表類別顯示順序
+CATEGORY_ORDER = ["regular_one_piece", "regular_two_piece", "junior", "dress", "accessory"]
 
 # ─── SKU 解析 ────────────────────────────────────────────────────────────────
 
@@ -46,7 +49,7 @@ def parse_sku(sku: str) -> dict | None:
     if not sku or len(sku) < 5:
         return None
     product_code = sku[:5]
-    if not product_code.isdigit():
+    if not sku[0].isdigit():
         return None
 
     second = product_code[1]
@@ -62,11 +65,11 @@ def parse_sku(sku: str) -> dict | None:
         elif third == "2":
             category = "regular_two_piece"
         else:
-            category = "other"   # 裙、泳帽、cover-up 上衣等
+            category = "accessory"
     elif second == "3":
         category = "dress"
     else:
-        category = "other"
+        category = "accessory"
 
     remainder = sku[5:]
 
@@ -136,7 +139,7 @@ query ($after: String, $query: String!) {
       node {
         name
         createdAt
-        financialStatus
+        displayFinancialStatus
         lineItems(first: 50) {
           edges {
             node {
@@ -146,6 +149,28 @@ query ($after: String, $query: String!) {
               variant {
                 inventoryItem { id }
               }
+            }
+          }
+        }
+      }
+    }
+    pageInfo { hasNextPage endCursor }
+  }
+}
+"""
+
+PRODUCT_CATALOG_QUERY = """
+query ($after: String, $query: String!) {
+  products(first: 250, after: $after, query: $query) {
+    edges {
+      node {
+        title
+        variants(first: 100) {
+          edges {
+            node {
+              sku
+              inventoryQuantity
+              inventoryItem { id }
             }
           }
         }
@@ -209,6 +234,51 @@ def fetch_inventory_batch(inv_item_ids: list[str]) -> dict[str, int]:
             result[node["id"]] = total
     return result
 
+def fetch_product_catalog() -> dict[str, dict]:
+    """
+    抓取所有 4/5/6 開頭 SKU 的 ACTIVE 商品，回傳
+    {product_code: {"name": str, "category": str, "inv_ids": set, "inventory": int}}
+    用於確保這些品項即使本週銷量為 0 也會顯示在報表中。
+    """
+    catalog: dict[str, dict] = {}
+    for prefix in ("4", "5", "6"):
+        cursor = None
+        while True:
+            data = shopify_gql(
+                PRODUCT_CATALOG_QUERY,
+                {"after": cursor, "query": f"status:active sku:{prefix}*"},
+            )
+            for pe in data["data"]["products"]["edges"]:
+                product = pe["node"]
+                title = product["title"]
+                for ve in product["variants"]["edges"]:
+                    v = ve["node"]
+                    sku = v.get("sku") or ""
+                    parsed = parse_sku(sku)
+                    if not parsed:
+                        continue
+                    pc = parsed["product_code"]
+                    if not pc[0].isdigit() or pc[0] not in ("4", "5", "6"):
+                        continue
+                    inv_id = v["inventoryItem"]["id"] if v.get("inventoryItem") else None
+                    inv_qty = v.get("inventoryQuantity") or 0
+                    if pc not in catalog:
+                        catalog[pc] = {
+                            "name":     product_display_name(pc, title),
+                            "category": parsed["category"],
+                            "inv_ids":  set(),
+                            "inventory": 0,
+                        }
+                    if inv_id:
+                        catalog[pc]["inv_ids"].add(inv_id)
+                    catalog[pc]["inventory"] += inv_qty
+            pi = data["data"]["products"]["pageInfo"]
+            if not pi["hasNextPage"]:
+                break
+            cursor = pi["endCursor"]
+    return catalog
+
+
 # ─── 計算銷售統計 ─────────────────────────────────────────────────────────────
 
 def compute_stats(orders: list[dict], inventory: dict[str, int]):
@@ -231,8 +301,8 @@ def compute_stats(orders: list[dict], inventory: dict[str, int]):
     inv_item_map: dict[str, str] = {}  # inventoryItemId → sku
 
     for order in orders:
-        # 跳過退款訂單
-        if order.get("financialStatus") in ("REFUNDED", "VOIDED"):
+        # 跳過退款訂單（整筆排除）
+        if order.get("displayFinancialStatus") in ("REFUNDED", "VOIDED"):
             continue
         for edge in order["lineItems"]["edges"]:
             li = edge["node"]
@@ -338,7 +408,7 @@ def render_html(
         "regular_two_piece": "#8b5cf6",
         "junior":            "#ec4899",
         "dress":             "#f59e0b",
-        "other":             "#94a3b8",
+        "accessory":         "#94a3b8",
     }
 
     def badge(text, color="#6366f1", bg=None):
@@ -387,7 +457,7 @@ def render_html(
         return f'<div style="margin-top:4px;">{chips}</div>'
 
     rows_html = ""
-    for cat in ["regular_one_piece", "regular_two_piece", "junior", "dress", "other"]:
+    for cat in CATEGORY_ORDER:
         pc_dict = item_totals.get(cat)
         if not pc_dict:
             continue
@@ -609,8 +679,30 @@ def main():
     print(f"🔄 正在查詢庫存（{len(inv_ids)} 個 SKU）...")
     inventory = fetch_inventory_batch(list(inv_ids))
 
+    print("🔄 正在抓取商品目錄（4/5/6 開頭品項）...")
+    product_catalog = fetch_product_catalog()
+    print(f"   → 共取得 {len(product_catalog)} 個商品代碼")
+
     print("📊 計算銷售統計...")
     category_totals, item_totals, color_totals, week_days = compute_stats(orders, inventory)
+
+    # 將目錄中的品項合入 item_totals（4/5/6 開頭，銷量=0 也要顯示）
+    for pc, cat_info in product_catalog.items():
+        cat = cat_info["category"]
+        if pc not in item_totals.get(cat, {}):
+            item_totals.setdefault(cat, {})[pc] = {
+                "name":      cat_info["name"],
+                "count":     0,
+                "daily_avg": 0,
+                "inventory": cat_info["inventory"],
+                "days_left": "∞",
+            }
+
+    # 重新計算 category_totals（含補入的 0 銷量品項不影響加總）
+    category_totals = {
+        cat: sum(v["count"] for v in pc_dict.values())
+        for cat, pc_dict in item_totals.items()
+    }
 
     print("🎨 生成 HTML 報表...")
     html = render_html(week_label, category_totals, item_totals, color_totals, week_days)
