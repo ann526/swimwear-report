@@ -1,416 +1,474 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HAI Swimwear · 週銷量報表</title>
+<html lang="zh-TW"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>HAI Swimwear 週銷量報表</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --ink: #0f172a;
-    --ink2: #475569;
-    --ink3: #94a3b8;
-    --surface: #f8f9fb;
-    --card: #ffffff;
-    --border: #e2e8f0;
-    --accent: #6366f1;
-    --accent-light: #eef2ff;
-    --accent2: #818cf8;
-    --top: #e0f2fe;
-    --top-text: #0369a1;
-    --bot: #fce7f3;
-    --bot-text: #9d174d;
-  }
-
-  body {
-    font-family: 'Inter', system-ui, sans-serif;
-    background: var(--surface);
-    color: var(--ink);
-    min-height: 100vh;
-  }
-
-  /* ── Header ── */
-  .header {
-    background: var(--ink);
-    color: #f8fafc;
-    padding: 20px 24px 0;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 2px 12px rgba(15,23,42,.18);
-  }
-  .header-top {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
-  .header-title { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
-  .header-badge {
-    font-size: 10px; font-weight: 600; color: #64748b;
-    background: #1e293b; padding: 3px 8px; border-radius: 4px;
-  }
-  .week-tabs {
-    display: flex; gap: 3px; overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .week-tabs::-webkit-scrollbar { display: none; }
-  .week-tab {
-    padding: 8px 14px; border: none; border-radius: 6px 6px 0 0;
-    cursor: pointer; font-size: 12px; font-weight: 600;
-    white-space: nowrap; transition: all .15s;
-    background: transparent; color: #64748b;
-  }
-  .week-tab.active { background: var(--surface); color: var(--ink); }
-
-  /* ── Cat tabs ── */
-  .cat-bar {
-    background: var(--card); border-bottom: 1px solid var(--border);
-    padding: 0 24px; display: flex; gap: 2px; overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .cat-bar::-webkit-scrollbar { display: none; }
-  .cat-tab {
-    padding: 10px 14px; border: none; border-bottom: 2px solid transparent;
-    cursor: pointer; font-size: 13px; font-weight: 600;
-    white-space: nowrap; background: transparent; color: var(--ink3);
-    transition: all .15s;
-  }
-  .cat-tab.active { border-bottom-color: var(--accent); color: var(--accent); }
-
-  /* ── Filters ── */
-  .filters {
-    background: var(--card); border-bottom: 1px solid var(--border);
-    padding: 10px 24px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
-  }
-  .filter-input, .filter-select {
-    padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px;
-    font-size: 12px; font-family: inherit; outline: none; background: var(--card);
-    color: var(--ink);
-  }
-  .filter-input { width: 130px; }
-  .size-btns { display: flex; gap: 3px; flex-wrap: wrap; }
-  .size-btn {
-    padding: 4px 9px; border: 1px solid var(--border); border-radius: 5px;
-    cursor: pointer; font-size: 11px; font-weight: 600;
-    background: var(--card); color: var(--ink2); font-family: inherit;
-    transition: all .15s;
-  }
-  .size-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .summary {
-    margin-left: auto; font-size: 13px; color: var(--ink2);
-    white-space: nowrap;
-  }
-  .summary b { color: var(--ink); }
-  .summary .hi { color: var(--accent); }
-
-  /* ── Items ── */
-  .list { padding: 14px 24px; display: flex; flex-direction: column; gap: 7px; }
-
-  .item-card {
-    background: var(--card); border-radius: 10px;
-    border: 1px solid var(--border); overflow: hidden;
-    transition: box-shadow .15s;
-  }
-  .item-card:hover { box-shadow: 0 2px 12px rgba(99,102,241,.08); }
-
-  .item-main {
-    padding: 12px 16px; display: flex; align-items: center; gap: 12px;
-  }
-  .item-id { width: 110px; flex-shrink: 0; }
-  .item-code { font-weight: 700; font-size: 15px; }
-  .item-badge {
-    display: inline-block; margin-top: 3px;
-    padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700;
-  }
-  .item-bar { flex: 1; }
-  .bar-track {
-    height: 9px; background: #f1f5f9; border-radius: 5px; overflow: hidden;
-  }
-  .bar-fill {
-    height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
-    border-radius: 5px; transition: width .4s ease;
-  }
-  .item-qty { width: 58px; text-align: right; flex-shrink: 0; }
-  .qty-num { font-weight: 800; font-size: 17px; }
-  .qty-unit { font-size: 11px; color: var(--ink3); margin-left: 2px; }
-  .item-tb { width: 100px; flex-shrink: 0; display: flex; gap: 5px; }
-  .tb-badge {
-    font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 700;
-  }
-  .tb-top { background: var(--top); color: var(--top-text); }
-  .tb-bot { background: var(--bot); color: var(--bot-text); }
-  .item-avg { width: 68px; flex-shrink: 0; text-align: right; }
-  .avg-label { font-size: 10px; color: var(--ink3); }
-  .avg-num { font-size: 13px; font-weight: 700; color: var(--ink2); }
-  .item-btns { display: flex; gap: 3px; flex-shrink: 0; }
-  .expand-btn {
-    padding: 3px 8px; border: 1px solid var(--border); border-radius: 5px;
-    cursor: pointer; font-size: 11px; font-weight: 600;
-    background: #f8f9fb; color: var(--ink2); font-family: inherit;
-    transition: all .15s;
-  }
-  .expand-btn.active {
-    background: var(--accent-light); border-color: var(--accent); color: var(--accent);
-  }
-
-  /* ── Expand panels ── */
-  .expand-panel {
-    border-top: 1px solid #f1f5f9; padding: 10px 16px; background: #fafafa;
-    display: none;
-  }
-  .expand-panel.open { display: block; }
-  .panel-label {
-    font-size: 10px; color: var(--ink3); font-weight: 700;
-    margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px;
-  }
-  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
-  .chip {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 8px; padding: 7px 11px; min-width: 64px; text-align: center;
-  }
-  .chip-num { font-weight: 800; font-size: 15px; }
-  .chip-label { font-size: 11px; color: var(--accent); font-weight: 700; }
-  .chip-pct { font-size: 10px; color: var(--ink3); }
-
-  /* ── Empty ── */
-  .empty {
-    text-align: center; padding: 60px; color: var(--ink3); font-size: 15px;
-  }
-
-  @media (max-width: 600px) {
-    .header { padding: 14px 16px 0; }
-    .list { padding: 12px 16px; }
-    .filters { padding: 8px 16px; }
-    .cat-bar { padding: 0 16px; }
-    .item-avg { display: none; }
-    .item-id { width: 90px; }
-  }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;background:#f8f9fb;color:#0f172a;}
+@media(max-width:680px){.wrap{padding:12px 4px!important;} .card{border-radius:0!important;}}
 </style>
 </head>
-<body>
+<body style="background:#f8f9fb;padding:0;">
+<div class="wrap" style="max-width:720px;margin:0 auto;padding:24px 16px;">
 
-<div class="header">
-  <div class="header-top">
-    <span class="header-title">HAI Swimwear · 週銷量報表</span>
-    <span class="header-badge">Paid at · 台灣時間</span>
+<!-- Header -->
+<div class="card" style="background:#0f172a;border-radius:16px 16px 0 0;padding:26px 30px 20px;">
+  <div style="color:#f8fafc;font-size:22px;font-weight:800;letter-spacing:-0.5px;">HAI Swimwear</div>
+  <div style="color:#94a3b8;font-size:13px;margin-top:4px;letter-spacing:.3px;">週銷量報表・2026/06/22（一）~ 2026/06/28（日）</div>
+</div>
+
+<!-- Summary -->
+<div style="background:#1e293b;padding:18px 30px 22px;display:flex;gap:14px;flex-wrap:wrap;">
+  <div style="flex:1;min-width:140px;background:#334155;border-radius:10px;padding:14px 18px;">
+    <div style="color:#94a3b8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;">本週總銷量</div>
+    <div style="color:#f8fafc;font-size:32px;font-weight:900;margin-top:6px;line-height:1;">317.0</div>
+    <div style="color:#64748b;font-size:12px;margin-top:2px;">件 / 套</div>
   </div>
-  <div class="week-tabs" id="weekTabs"></div>
+  <div style="flex:1;min-width:140px;background:#334155;border-radius:10px;padding:14px 18px;">
+    <div style="color:#94a3b8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;">日均銷量</div>
+    <div style="color:#f8fafc;font-size:32px;font-weight:900;margin-top:6px;line-height:1;">45.3</div>
+    <div style="color:#64748b;font-size:12px;margin-top:2px;">件·套 / 天（共 7 天）</div>
+  </div>
+  <div style="flex:1;min-width:120px;background:#334155;border-radius:10px;padding:14px 18px;"><div style="color:#94a3b8;font-size:10px;font-weight:700;letter-spacing:.5px;">泳裝正線・一件式</div><div style="color:#0ea5e9;font-size:22px;font-weight:900;margin-top:4px;">122.0</div><div style="color:#64748b;font-size:11px;">件</div></div><div style="flex:1;min-width:120px;background:#334155;border-radius:10px;padding:14px 18px;"><div style="color:#94a3b8;font-size:10px;font-weight:700;letter-spacing:.5px;">泳裝正線・兩件式</div><div style="color:#8b5cf6;font-size:22px;font-weight:900;margin-top:4px;">39.0</div><div style="color:#64748b;font-size:11px;">套</div></div><div style="flex:1;min-width:120px;background:#334155;border-radius:10px;padding:14px 18px;"><div style="color:#94a3b8;font-size:10px;font-weight:700;letter-spacing:.5px;">泳裝 Junior 線</div><div style="color:#ec4899;font-size:22px;font-weight:900;margin-top:4px;">78.0</div><div style="color:#64748b;font-size:11px;">件</div></div><div style="flex:1;min-width:120px;background:#334155;border-radius:10px;padding:14px 18px;"><div style="color:#94a3b8;font-size:10px;font-weight:700;letter-spacing:.5px;">洋裝 / Cover-up</div><div style="color:#f59e0b;font-size:22px;font-weight:900;margin-top:4px;">9.0</div><div style="color:#64748b;font-size:11px;">件</div></div><div style="flex:1;min-width:120px;background:#334155;border-radius:10px;padding:14px 18px;"><div style="color:#94a3b8;font-size:10px;font-weight:700;letter-spacing:.5px;">其他配件</div><div style="color:#94a3b8;font-size:22px;font-weight:900;margin-top:4px;">69.0</div><div style="color:#64748b;font-size:11px;">件</div></div>
 </div>
 
-<div class="cat-bar" id="catBar"></div>
-
-<div class="filters">
-  <input class="filter-input" id="searchInput" placeholder="品項搜尋…" oninput="render()">
-  <select class="filter-select" id="colorSelect" onchange="render()">
-    <option value="">所有顏色</option>
-  </select>
-  <div class="size-btns" id="sizeBtns"></div>
-  <div class="summary" id="summary"></div>
+<!-- Main Table -->
+<div style="background:#fff;padding:4px 24px 28px;border-radius:0 0 0 0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+    
+    <tr><td colspan="5" style="padding:22px 0 6px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:4px;height:22px;background:#0ea5e9;border-radius:2px;display:inline-block;"></div>
+        <span style="font-size:15px;font-weight:800;color:#0f172a;">泳裝正線・一件式</span>
+        <span style="display:inline-block;padding:1px 10px;border-radius:20px;font-size:12px;font-weight:700;color:#0ea5e9;background:#0ea5e922;">本週 122.0 件</span>
+      </div>
+    </td></tr>
+    <tr style="background:#f1f5f9;">
+      <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;font-weight:700;">品項代碼</th>
+      <th style="padding:8px 14px;text-align:left;font-size:12px;color:#64748b;font-weight:700;">商品名稱・顏色明細</th>
+      <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:700;">週銷量</th>
+      <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:700;">日均</th>
+      <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:700;">庫存<br><span style="font-weight:400;font-size:10px;">(待查詢)</span></th>
+    </tr>
+        <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#0ea5e9;vertical-align:top;">61106</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Stacey x HAI | Monaco Knotted One-Piece</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>EG</b> Emerald Green 1.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>GR</b> GR 1.0件</span></div>
+            
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">2.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">0.29</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#fafafe;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#0ea5e9;vertical-align:top;">41109</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Second Skin Shimmer | Criss Cross Halterneck </div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>TO</b> Terracotta Orange 2.0件</span></div>
+            
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">2.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">0.29</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#0ea5e9;vertical-align:top;">41105</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Second Skin Shimmer | Ribbon-tie Ruched One-p</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>MP</b> Mist Purple 1.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>EG</b> Emerald Green 1.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>TO</b> Terracotta Orange 1.0件</span></div>
+            
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">3.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">0.43</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#fafafe;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#0ea5e9;vertical-align:top;">41107</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Stardust | The Island Halter One Piece 2024</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>NV</b> Navy 2.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SW</b> Starry White 2.0件</span></div>
+            
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">4.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">0.57</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#0ea5e9;vertical-align:top;">61111</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Whispering Springs | Plunge Neck with Mini Co</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>DG</b> Indigo 7.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SP</b> Spring 2.0件</span></div>
+            
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">9.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">1.29</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#fafafe;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#0ea5e9;vertical-align:top;">41110</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Coral Mirage | Strapless Cut-Off One Piece</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SW</b> Starry White 4.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>NV</b> Navy 2.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>VS</b> Velvet Silver 1.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>VP</b> Velvet Purple 1.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>OG</b> Orange 1.0件</span></div>
+            
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">9.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">1.29</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#0ea5e9;vertical-align:top;">61109</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Wen x HAI | Classic 50’s Riviera One-Piece</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>GN</b> Gingham Noir 11.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>GB</b> Gingham Blue 5.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>GP</b> Gingham Pink 1.0件</span></div>
+            
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">17.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">2.43</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#fafafe;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#0ea5e9;vertical-align:top;">41102</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Stardust | One Shoulder One-piece</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SW</b> Starry White 5.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>PK</b> Pink 5.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>NV</b> Navy 3.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>DG</b> Indigo 3.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SP</b> Spring 1.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>BB</b> Baby Blue 1.0件</span></div>
+            
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">18.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">2.57</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#0ea5e9;vertical-align:top;">51106</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Stardust | Off-Shoulder Wrap Swimsuit</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>NV</b> Navy 7.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SW</b> Starry White 5.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>PK</b> Pink 5.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>BB</b> Baby Blue 2.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>MC</b> Mocha Clay 1.0件</span></div>
+            
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">20.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">2.86</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#fafafe;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#0ea5e9;vertical-align:top;">61115</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Wen x HAI | Vintage Bow-Tie One-Piece</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>NV</b> Navy 13.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>GN</b> Gingham Noir 9.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>GB</b> Gingham Blue 7.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>GP</b> Gingham Pink 6.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SW</b> Starry White 3.0件</span></div>
+            
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">38.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">5.43</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+    <tr><td colspan="5" style="padding:22px 0 6px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:4px;height:22px;background:#8b5cf6;border-radius:2px;display:inline-block;"></div>
+        <span style="font-size:15px;font-weight:800;color:#0f172a;">泳裝正線・兩件式</span>
+        <span style="display:inline-block;padding:1px 10px;border-radius:20px;font-size:12px;font-weight:700;color:#8b5cf6;background:#8b5cf622;">本週 39.0 套</span>
+      </div>
+    </td></tr>
+    <tr style="background:#f1f5f9;">
+      <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;font-weight:700;">品項代碼</th>
+      <th style="padding:8px 14px;text-align:left;font-size:12px;color:#64748b;font-weight:700;">商品名稱・顏色明細</th>
+      <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:700;">週銷量</th>
+      <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:700;">日均</th>
+      <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:700;">庫存<br><span style="font-weight:400;font-size:10px;">(待查詢)</span></th>
+    </tr>
+        <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#8b5cf6;vertical-align:top;">41207</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Stardust | Triangle Bikini Bottom with Hoops</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>HS</b> Horizon Sand 0.5套</span></div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:3px;">上身 0 件 ＋ 下身 1 件 = 0.5 套</div>
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">0.5<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 套</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">0.07</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#fafafe;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#8b5cf6;vertical-align:top;">61202</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Stacey x HAI | Monte Carlo Ruched Bandeau Top</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>EG</b> Emerald Green 1.0套</span></div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:3px;">上身 1 件 ＋ 下身 1 件 = 1.0 套</div>
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">1.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 套</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">0.14</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#8b5cf6;vertical-align:top;">41214</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Stardust | Loop-de-Loop Bikini bottom</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>HS</b> Horizon Sand 1.0套</span></div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:3px;">上身 1 件 ＋ 下身 1 件 = 1.0 套</div>
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">1.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 套</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">0.14</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#fafafe;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#8b5cf6;vertical-align:top;">41213</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Stardust | Classic High Waisted Pantie 2024</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>LC</b> Light Copper 1.0套</span></div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:3px;">上身 1 件 ＋ 下身 1 件 = 1.0 套</div>
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">1.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 套</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">0.14</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#8b5cf6;vertical-align:top;">31204</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Stardust｜Classic High Waisted Pantie 2025</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SW</b> Starry White 1.0套</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>LC</b> Light Copper 0.5套</span></div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:3px;">上身 1 件 ＋ 下身 2 件 = 1.5 套</div>
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">1.5<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 套</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">0.21</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#fafafe;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#8b5cf6;vertical-align:top;">51203</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Stardust | W-Wire Bikini Top with Wide Straps</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>NV</b> Navy 3.0套</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>LC</b> Light Copper 0.5套</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SW</b> Starry White 0.5套</span></div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:3px;">上身 4 件 ＋ 下身 4 件 = 4.0 套</div>
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">4.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 套</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">0.57</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#8b5cf6;vertical-align:top;">51201</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Stardust | Halterneck Ruched Bikini Top 2.0</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>NV</b> Navy 4.5套</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SW</b> Starry White 3.5套</span></div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:3px;">上身 9 件 ＋ 下身 7 件 = 8.0 套</div>
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">8.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 套</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">1.14</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#fafafe;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#8b5cf6;vertical-align:top;">61214</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Whispering Springs | High-Waist Bikershort Bi</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SP</b> Spring 9.5套</span></div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:3px;">上身 6 件 ＋ 下身 13 件 = 9.5 套</div>
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">9.5<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 套</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">1.36</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#8b5cf6;vertical-align:top;">61213</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Whispering Springs | One-Shoulder Twist Bikin</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SP</b> Spring 9.0套</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>DG</b> Indigo 3.5套</span></div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:3px;">上身 14 件 ＋ 下身 11 件 = 12.5 套</div>
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">12.5<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 套</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">1.79</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+    <tr><td colspan="5" style="padding:22px 0 6px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:4px;height:22px;background:#ec4899;border-radius:2px;display:inline-block;"></div>
+        <span style="font-size:15px;font-weight:800;color:#0f172a;">泳裝 Junior 線</span>
+        <span style="display:inline-block;padding:1px 10px;border-radius:20px;font-size:12px;font-weight:700;color:#ec4899;background:#ec489922;">本週 78.0 件</span>
+      </div>
+    </td></tr>
+    <tr style="background:#f1f5f9;">
+      <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;font-weight:700;">品項代碼</th>
+      <th style="padding:8px 14px;text-align:left;font-size:12px;color:#64748b;font-weight:700;">商品名稱・顏色明細</th>
+      <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:700;">週銷量</th>
+      <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:700;">日均</th>
+      <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:700;">庫存<br><span style="font-weight:400;font-size:10px;">(待查詢)</span></th>
+    </tr>
+        <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#ec4899;vertical-align:top;">41504</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Summer Bliss | High-Waisted Boxer Brief Bikin</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JP</b> Jelly Pink 4.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JB</b> Jellyboo Brown 3.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JL</b> Jelly Lavender 3.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JY</b> Jellyboo Yellow 1.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JW</b> Jelly White 1.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JT</b> Jelly Teal 1.0件</span></div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:3px;">上身 0 件 ／ 下身 13 件</div>
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">13.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">1.86</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#fafafe;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#ec4899;vertical-align:top;">41503</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Summer Bliss | Soft Sculpt Bottom</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JT</b> Jelly Teal 7.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JW</b> Jelly White 4.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JY</b> Jellyboo Yellow 3.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JL</b> Jelly Lavender 2.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JP</b> Jelly Pink 2.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JB</b> Jellyboo Brown 1.0件</span></div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:3px;">上身 0 件 ／ 下身 19 件</div>
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">19.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">2.71</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#ec4899;vertical-align:top;">41501</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Summer Bliss | Tie Bikini Bottom</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JT</b> Jelly Teal 7.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JV</b> Jelly Violet 4.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JY</b> Jellyboo Yellow 3.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JP</b> Jelly Pink 2.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JL</b> Jelly Lavender 2.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JW</b> Jelly White 1.0件</span></div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:3px;">上身 8 件 ／ 下身 11 件</div>
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">19.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">2.71</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#fafafe;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#ec4899;vertical-align:top;">41502</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Summer Bliss+ | Pillow-Soft Bikini Top</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JT</b> Jelly Teal 8.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JW</b> Jelly White 5.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JY</b> Jellyboo Yellow 5.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JP</b> Jelly Pink 4.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JL</b> Jelly Lavender 3.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>JB</b> Jellyboo Brown 2.0件</span></div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:3px;">上身 27 件 ／ 下身 0 件</div>
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">27.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">3.86</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+    <tr><td colspan="5" style="padding:22px 0 6px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:4px;height:22px;background:#f59e0b;border-radius:2px;display:inline-block;"></div>
+        <span style="font-size:15px;font-weight:800;color:#0f172a;">洋裝 / Cover-up</span>
+        <span style="display:inline-block;padding:1px 10px;border-radius:20px;font-size:12px;font-weight:700;color:#f59e0b;background:#f59e0b22;">本週 9.0 件</span>
+      </div>
+    </td></tr>
+    <tr style="background:#f1f5f9;">
+      <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;font-weight:700;">品項代碼</th>
+      <th style="padding:8px 14px;text-align:left;font-size:12px;color:#64748b;font-weight:700;">商品名稱・顏色明細</th>
+      <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:700;">週銷量</th>
+      <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:700;">日均</th>
+      <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:700;">庫存<br><span style="font-weight:400;font-size:10px;">(待查詢)</span></th>
+    </tr>
+        <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#f59e0b;vertical-align:top;">43001</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Second Skin Satiny | Sweetheart Ruched Maxi D</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>OB</b> Onyx Black 1.0件</span></div>
+            
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">1.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">0.14</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#fafafe;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#f59e0b;vertical-align:top;">63404</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Ribbed Realness | Shimmer Island Cover-Up</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>OB</b> Onyx Black 6.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>GW</b> Galactic White 2.0件</span></div>
+            
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">8.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">1.14</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+    <tr><td colspan="5" style="padding:22px 0 6px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:4px;height:22px;background:#94a3b8;border-radius:2px;display:inline-block;"></div>
+        <span style="font-size:15px;font-weight:800;color:#0f172a;">其他配件</span>
+        <span style="display:inline-block;padding:1px 10px;border-radius:20px;font-size:12px;font-weight:700;color:#94a3b8;background:#94a3b822;">本週 69.0 件</span>
+      </div>
+    </td></tr>
+    <tr style="background:#f1f5f9;">
+      <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;font-weight:700;">品項代碼</th>
+      <th style="padding:8px 14px;text-align:left;font-size:12px;color:#64748b;font-weight:700;">商品名稱・顏色明細</th>
+      <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:700;">週銷量</th>
+      <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:700;">日均</th>
+      <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:700;">庫存<br><span style="font-weight:400;font-size:10px;">(待查詢)</span></th>
+    </tr>
+        <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#94a3b8;vertical-align:top;">61304</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Whispering Springs | Tie-Front Crop Swim Cove</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SP</b> Spring 1.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>DG</b> Indigo 1.0件</span></div>
+            
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">2.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">0.29</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#fafafe;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#94a3b8;vertical-align:top;">61306</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Whispering Springs | Cross-Front Long-Sleeve </div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SP</b> Spring 3.0件</span></div>
+            
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">3.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">0.43</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#94a3b8;vertical-align:top;">61303</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Whispering Springs | Tulip Wrap Swim Skirt</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SP</b> Spring 3.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>DG</b> Indigo 3.0件</span></div>
+            
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">6.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">0.86</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#fafafe;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#94a3b8;vertical-align:top;">31303</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Bubble Check | High Slit Mini Skirt</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>GB</b> Gingham Blue 7.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>GN</b> Gingham Noir 7.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>NV</b> Navy 5.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SW</b> Starry White 5.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>GP</b> Gingham Pink 3.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>EG</b> Emerald Green 1.0件</span></div>
+            
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">28.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">4.00</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+        <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 12px;font-family:monospace;font-size:14px;font-weight:700;color:#94a3b8;vertical-align:top;">41307</td>
+          <td style="padding:10px 14px;vertical-align:top;">
+            <div style="font-weight:600;font-size:13px;color:#0f172a;">Bubble Check | Knotted Swim Cap</div>
+            <div style="margin-top:5px;"><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>NV</b> Navy 7.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>GN</b> Gingham Noir 6.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>GB</b> Gingham Blue 5.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SW</b> Starry White 4.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>GP</b> Gingham Pink 3.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>SP</b> Spring 3.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>BB</b> Baby Blue 1.0件</span><span style="display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:10px;font-size:11px;background:#f1f5f9;color:#475569;"><b>PK</b> Pink 1.0件</span></div>
+            
+          </td>
+          <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:#0f172a;vertical-align:middle;">30.0<span style="font-size:11px;color:#94a3b8;font-weight:400;"> 件</span></td>
+          <td style="padding:10px 12px;text-align:center;color:#475569;font-size:13px;vertical-align:middle;">4.29</td>
+          <td style="padding:10px 12px;text-align:center;color:#94a3b8;font-size:12px;vertical-align:middle;">—</td>
+        </tr>
+  </table>
 </div>
 
-<div class="list" id="itemList"></div>
+<!-- Top 5 -->
+<div style="background:#fff;margin-top:12px;border-radius:12px;padding:22px 24px;">
+  <div style="font-size:15px;font-weight:800;margin-bottom:12px;">🔥 本週熱銷 Top 5</div>
+  <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">
+    <tr style="background:#f8f9fb;">
+      <th style="padding:8px 14px;text-align:left;font-size:12px;color:#64748b;">品項</th>
+      <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;">銷量</th>
+      <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;">類別</th>
+    </tr>
+    <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:9px 14px;">🥇 <b style="font-family:monospace;">61115</b> <span style="color:#64748b;font-size:12px;">Wen x HAI | Vintage Bow-Tie One-</span></td><td style="padding:9px 12px;text-align:center;font-weight:800;font-size:15px;">38.0</td><td style="padding:9px 12px;text-align:center;"><span style="display:inline-block;padding:1px 10px;border-radius:20px;font-size:12px;font-weight:700;color:#0ea5e9;background:#0ea5e922;">泳裝正線・一件式</span></td></tr><tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:9px 14px;">🥈 <b style="font-family:monospace;">41307</b> <span style="color:#64748b;font-size:12px;">Bubble Check | Knotted Swim Cap</span></td><td style="padding:9px 12px;text-align:center;font-weight:800;font-size:15px;">30.0</td><td style="padding:9px 12px;text-align:center;"><span style="display:inline-block;padding:1px 10px;border-radius:20px;font-size:12px;font-weight:700;color:#94a3b8;background:#94a3b822;">其他配件</span></td></tr><tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:9px 14px;">🥉 <b style="font-family:monospace;">31303</b> <span style="color:#64748b;font-size:12px;">Bubble Check | High Slit Mini Sk</span></td><td style="padding:9px 12px;text-align:center;font-weight:800;font-size:15px;">28.0</td><td style="padding:9px 12px;text-align:center;"><span style="display:inline-block;padding:1px 10px;border-radius:20px;font-size:12px;font-weight:700;color:#94a3b8;background:#94a3b822;">其他配件</span></td></tr><tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:9px 14px;">4️⃣ <b style="font-family:monospace;">41502</b> <span style="color:#64748b;font-size:12px;">Summer Bliss+ | Pillow-Soft Biki</span></td><td style="padding:9px 12px;text-align:center;font-weight:800;font-size:15px;">27.0</td><td style="padding:9px 12px;text-align:center;"><span style="display:inline-block;padding:1px 10px;border-radius:20px;font-size:12px;font-weight:700;color:#ec4899;background:#ec489922;">泳裝 Junior 線</span></td></tr><tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:9px 14px;">5️⃣ <b style="font-family:monospace;">51106</b> <span style="color:#64748b;font-size:12px;">Stardust | Off-Shoulder Wrap Swi</span></td><td style="padding:9px 12px;text-align:center;font-weight:800;font-size:15px;">20.0</td><td style="padding:9px 12px;text-align:center;"><span style="display:inline-block;padding:1px 10px;border-radius:20px;font-size:12px;font-weight:700;color:#0ea5e9;background:#0ea5e922;">泳裝正線・一件式</span></td></tr>
+  </table>
+</div>
 
-<div style="height:40px"></div>
+<!-- Note -->
+<div style="background:#f0fdf4;border-radius:12px;margin-top:12px;padding:18px 22px;border-left:4px solid #22c55e;">
+  <div style="font-weight:700;color:#166534;margin-bottom:8px;font-size:13px;">⚠️ 本週報表說明（供確認用）</div>
+  <ul style="padding-left:18px;font-size:12px;color:#166534;line-height:2;">
+    <li>共 195 筆訂單，已剔除 2 筆退款單</li>
+    <li>庫存欄位此次為預覽版，尚未查詢（GitHub Actions 執行時會自動抓取）</li>
+    <li>正線兩件式 39 套 = 上下身合計 78 件 ÷ 2</li>
+    <li>Junior 線 78 件（上下身各算一件）</li>
+    <li>「其他配件」包含泳帽、泳裙、罩衫上衣等，需確認分類是否正確</li>
+  </ul>
+</div>
 
-<script>
-const DB = {"weeks":["2026-06-01","2026-06-08","2026-06-15","2026-06-22"],"week_labels":{"2026-06-01":"6/1（週一）– 6/7（週日）","2026-06-08":"6/8（週一）– 6/14（週日）","2026-06-15":"6/15（週一）– 6/21（週日）","2026-06-22":"6/22（週一）– 6/28（週日）"},"data":{"2026-06-01":{"31303":{"cat":"泳裝配件","unit":"件","total":15,"T":0,"B":0,"colors":{"GN":5,"GP":4,"SW":3,"NV":2,"GB":1},"sizes":{"S":4,"M":7,"L":4}},"41504":{"cat":"Junior","unit":"件","total":5,"T":0,"B":5,"colors":{"JL":2,"JB":1,"JP":1,"JT":1},"sizes":{"S":1,"M":4}},"53G01":{"cat":"特殊洋裝","unit":"套","total":2,"T":0,"B":0,"colors":{"OB":2},"sizes":{"M":2}},"41102":{"cat":"正線一件式","unit":"套","total":21,"T":0,"B":0,"colors":{"PK":10,"SW":3,"NV":3,"BB":2,"GW":1,"DG":1,"OB":1},"sizes":{"S":5,"M":11,"L":2,"XL":3}},"61115":{"cat":"正線一件式","unit":"套","total":25,"T":0,"B":0,"colors":{"GN":13,"GP":8,"GB":4},"sizes":{"S":6,"M":10,"L":7,"XL":2}},"61109":{"cat":"正線一件式","unit":"套","total":11,"T":0,"B":0,"colors":{"GN":6,"GB":4,"GP":1},"sizes":{"S":3,"M":4,"L":4}},"41503":{"cat":"Junior","unit":"件","total":9,"T":0,"B":9,"colors":{"JB":5,"JY":2,"JW":1,"JT":1},"sizes":{"S":4,"M":4,"L":1}},"41502":{"cat":"Junior","unit":"件","total":11,"T":11,"B":0,"colors":{"JB":4,"JW":2,"JT":2,"JY":2,"JL":1},"sizes":{"S":11}},"41307":{"cat":"泳裝配件","unit":"件","total":10,"T":0,"B":0,"colors":{"PK":3,"GP":3,"GB":2,"GN":1,"SP":1},"sizes":{"F":10}},"41110":{"cat":"正線一件式","unit":"套","total":4,"T":0,"B":0,"colors":{"VS":2,"VG":1,"OG":1},"sizes":{"S":1,"M":3}},"51201":{"cat":"正線兩件式","unit":"套","total":6,"T":7,"B":6,"colors":{"NV":11,"SW":2},"sizes":{"XS":6,"S":5,"M":2}},"51203":{"cat":"正線兩件式","unit":"套","total":2,"T":2,"B":2,"colors":{"NV":4},"sizes":{"S":1,"M":1,"L":2}},"41501":{"cat":"Junior","unit":"件","total":16,"T":9,"B":7,"colors":{"JW":6,"JV":5,"JB":2,"JY":2,"JL":1},"sizes":{"S":9,"M":7}},"61111":{"cat":"正線一件式","unit":"套","total":3,"T":0,"B":0,"colors":{"SP":2,"DG":1},"sizes":{"S":1,"M":1,"XL":1}},"61214":{"cat":"正線兩件式","unit":"套","total":1,"T":1,"B":1,"colors":{"SP":2},"sizes":{"M":1,"XL":1}},"63404":{"cat":"洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"L":1}},"63410":{"cat":"洋裝","unit":"套","total":3,"T":0,"B":0,"colors":{"OB":3},"sizes":{"M":3}},"61303":{"cat":"泳裝配件","unit":"件","total":1,"T":0,"B":0,"colors":{"DG":1},"sizes":{"S":1}},"31106":{"cat":"正線一件式","unit":"套","total":2,"T":0,"B":0,"colors":{"GR":1,"EG":1},"sizes":{"S":1,"M":1}},"61213":{"cat":"正線兩件式","unit":"套","total":2,"T":2,"B":3,"colors":{"SP":3,"DG":2},"sizes":{"S":2,"L":2,"XL":1}},"63405":{"cat":"洋裝","unit":"套","total":2,"T":0,"B":0,"colors":{"OB":2},"sizes":{"S":1,"M":1}},"51106":{"cat":"正線一件式","unit":"套","total":9,"T":0,"B":0,"colors":{"BB":4,"PK":3,"NV":1,"SW":1},"sizes":{"S":7,"L":2}},"51102":{"cat":"正線一件式","unit":"套","total":1,"T":0,"B":0,"colors":{"LC":1},"sizes":{"S":1}},"33001":{"cat":"洋裝","unit":"套","total":2,"T":0,"B":0,"colors":{"BY":1,"WH":1},"sizes":{"S":1,"M":1}},"31209":{"cat":"正線兩件式","unit":"套","total":1,"T":1,"B":1,"colors":{"OB":2},"sizes":{"M":2}},"41105":{"cat":"正線一件式","unit":"套","total":1,"T":0,"B":0,"colors":{"TO":1},"sizes":{"M":1}},"41214":{"cat":"正線兩件式","unit":"套","total":0,"T":2,"B":0,"colors":{"PA":1,"NV":1},"sizes":{"S":2}},"31204":{"cat":"正線兩件式","unit":"套","total":2,"T":2,"B":5,"colors":{"SW":3,"MC":2,"NV":1,"LC":1},"sizes":{"S":1,"M":1,"L":3,"XL":2}},"41213":{"cat":"正線兩件式","unit":"套","total":0,"T":1,"B":0,"colors":{"LC":1},"sizes":{"M":1}},"53E01":{"cat":"特殊洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"S":1}},"43001":{"cat":"洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"L":1}}},"2026-06-08":{"53G02":{"cat":"特殊洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"HS":1},"sizes":{"M":1}},"51106":{"cat":"正線一件式","unit":"套","total":14,"T":0,"B":0,"colors":{"NV":6,"SW":5,"BB":2,"PK":1},"sizes":{"S":5,"M":4,"L":1,"XL":2,"XXL":2}},"41502":{"cat":"Junior","unit":"件","total":14,"T":14,"B":0,"colors":{"JB":6,"JP":3,"JT":2,"JW":2,"JL":1},"sizes":{"S":14}},"41504":{"cat":"Junior","unit":"件","total":9,"T":0,"B":9,"colors":{"JB":3,"JT":3,"JP":2,"JL":1},"sizes":{"S":2,"M":4,"L":3}},"63404":{"cat":"洋裝","unit":"套","total":6,"T":0,"B":0,"colors":{"OB":6},"sizes":{"S":3,"M":3}},"41102":{"cat":"正線一件式","unit":"套","total":11,"T":0,"B":0,"colors":{"PK":5,"SW":2,"BB":2,"NV":1,"DG":1},"sizes":{"S":3,"M":4,"L":2,"XL":2}},"61115":{"cat":"正線一件式","unit":"套","total":7,"T":0,"B":0,"colors":{"GB":3,"GN":2,"GP":2},"sizes":{"S":1,"M":2,"L":2,"XL":2}},"41503":{"cat":"Junior","unit":"件","total":7,"T":0,"B":7,"colors":{"JP":3,"JB":2,"JW":1,"JT":1},"sizes":{"S":3,"M":3,"L":1}},"31204":{"cat":"正線兩件式","unit":"套","total":3,"T":3,"B":5,"colors":{"SW":5,"MC":2,"TT":1},"sizes":{"S":2,"M":4,"L":2}},"51201":{"cat":"正線兩件式","unit":"套","total":5,"T":5,"B":6,"colors":{"NV":8,"SW":3},"sizes":{"XS":6,"S":4,"M":1}},"51203":{"cat":"正線兩件式","unit":"套","total":2,"T":3,"B":2,"colors":{"NV":3,"LC":1,"SW":1},"sizes":{"S":1,"L":1,"XL":3}},"61214":{"cat":"正線兩件式","unit":"套","total":6,"T":6,"B":8,"colors":{"SP":13,"DG":1},"sizes":{"S":1,"M":5,"L":5,"XL":2,"XXL":1}},"61302":{"cat":"泳裝配件","unit":"件","total":2,"T":0,"B":0,"colors":{"DG":2},"sizes":{"M":2}},"41105":{"cat":"正線一件式","unit":"套","total":5,"T":0,"B":0,"colors":{"MP":3,"TO":2},"sizes":{"L":4,"XL":1}},"31303":{"cat":"泳裝配件","unit":"件","total":13,"T":0,"B":0,"colors":{"GN":4,"GB":4,"NV":1,"SW":1,"MP":1,"EG":1,"SB":1},"sizes":{"S":1,"M":8,"L":4}},"41501":{"cat":"Junior","unit":"件","total":7,"T":3,"B":4,"colors":{"JT":2,"JY":2,"JB":1,"JP":1,"JW":1},"sizes":{"S":4,"M":3}},"41307":{"cat":"泳裝配件","unit":"件","total":12,"T":0,"B":0,"colors":{"NV":3,"EG":3,"GB":2,"GN":1,"PK":1,"SW":1,"MP":1},"sizes":{"F":12}},"61109":{"cat":"正線一件式","unit":"套","total":11,"T":0,"B":0,"colors":{"GN":6,"GB":4,"GP":1},"sizes":{"S":1,"M":3,"L":7}},"61106":{"cat":"正線一件式","unit":"套","total":6,"T":0,"B":0,"colors":{"EG":2,"GR":2,"PA":1,"MP":1},"sizes":{"S":3,"M":3}},"63410":{"cat":"洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"M":1}},"31106":{"cat":"正線一件式","unit":"套","total":1,"T":0,"B":0,"colors":{"PA":1},"sizes":{"XL":1}},"41107":{"cat":"正線一件式","unit":"套","total":2,"T":0,"B":0,"colors":{"NV":1,"SW":1},"sizes":{"M":1,"XL":1}},"61202":{"cat":"正線兩件式","unit":"套","total":1,"T":1,"B":2,"colors":{"EG":3},"sizes":{"L":3}},"61213":{"cat":"正線兩件式","unit":"套","total":2,"T":5,"B":2,"colors":{"SP":4,"DG":3},"sizes":{"S":1,"M":2,"L":2,"XL":1,"XXL":1}},"53E01":{"cat":"特殊洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"M":1}},"41101":{"cat":"正線一件式","unit":"套","total":1,"T":0,"B":0,"colors":{"GW":1},"sizes":{"XL":1}},"53G01":{"cat":"特殊洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"S":1}},"61111":{"cat":"正線一件式","unit":"套","total":4,"T":0,"B":0,"colors":{"DG":4},"sizes":{"S":1,"M":2,"L":1}},"33001":{"cat":"洋裝","unit":"套","total":2,"T":0,"B":0,"colors":{"BY":1,"OB":1},"sizes":{"M":1,"L":1}},"41110":{"cat":"正線一件式","unit":"套","total":1,"T":0,"B":0,"colors":{"VS":1},"sizes":{"M":1}},"61304":{"cat":"泳裝配件","unit":"件","total":2,"T":0,"B":0,"colors":{"SP":2},"sizes":{"M":2}},"61306":{"cat":"泳裝配件","unit":"件","total":1,"T":0,"B":0,"colors":{"SP":1},"sizes":{"S":1}},"51102":{"cat":"正線一件式","unit":"套","total":1,"T":0,"B":0,"colors":{"LC":1},"sizes":{"XL":1}},"63405":{"cat":"洋裝","unit":"套","total":3,"T":0,"B":0,"colors":{"OB":3},"sizes":{"S":2,"L":1}},"41214":{"cat":"正線兩件式","unit":"套","total":0,"T":1,"B":0,"colors":{"NV":1},"sizes":{"S":1}}},"2026-06-15":{"51106":{"cat":"正線一件式","unit":"套","total":25,"T":0,"B":0,"colors":{"NV":9,"SW":6,"PK":6,"BB":4},"sizes":{"S":10,"M":11,"L":4}},"41504":{"cat":"Junior","unit":"件","total":23,"T":0,"B":23,"colors":{"JY":6,"JL":6,"JB":5,"JP":3,"JT":2,"JW":1},"sizes":{"S":6,"M":12,"L":5}},"61111":{"cat":"正線一件式","unit":"套","total":3,"T":0,"B":0,"colors":{"DG":2,"SP":1},"sizes":{"M":1,"L":1,"XL":1}},"41501":{"cat":"Junior","unit":"件","total":15,"T":9,"B":6,"colors":{"JL":4,"JY":3,"JB":3,"JP":3,"JW":2},"sizes":{"S":13,"M":2}},"41105":{"cat":"正線一件式","unit":"套","total":2,"T":0,"B":0,"colors":{"TO":1,"MP":1},"sizes":{"S":1,"XL":1}},"41502":{"cat":"Junior","unit":"件","total":28,"T":28,"B":0,"colors":{"JB":8,"JY":7,"JT":5,"JW":5,"JL":2,"JP":1},"sizes":{"S":28}},"41107":{"cat":"正線一件式","unit":"套","total":10,"T":0,"B":0,"colors":{"SW":8,"NV":2},"sizes":{"S":6,"M":4}},"51201":{"cat":"正線兩件式","unit":"套","total":7,"T":7,"B":7,"colors":{"SW":8,"NV":6},"sizes":{"XS":2,"S":11,"M":1}},"61109":{"cat":"正線一件式","unit":"套","total":7,"T":0,"B":0,"colors":{"GB":4,"GN":3},"sizes":{"M":2,"L":5}},"61213":{"cat":"正線兩件式","unit":"套","total":6,"T":8,"B":6,"colors":{"SP":12,"DG":2},"sizes":{"S":1,"M":1,"L":6,"XL":6}},"41307":{"cat":"泳裝配件","unit":"件","total":23,"T":0,"B":0,"colors":{"NV":7,"SW":4,"SP":3,"PK":3,"BB":3,"GB":3},"sizes":{"F":23}},"63410":{"cat":"洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"S":1}},"61115":{"cat":"正線一件式","unit":"套","total":20,"T":0,"B":0,"colors":{"GB":7,"GP":5,"NV":5,"GN":3},"sizes":{"S":4,"M":9,"L":4,"XL":3}},"31303":{"cat":"泳裝配件","unit":"件","total":16,"T":0,"B":0,"colors":{"GB":6,"NV":4,"SW":2,"BB":1,"EG":1,"GP":1,"GN":1},"sizes":{"S":3,"M":7,"L":6}},"41102":{"cat":"正線一件式","unit":"套","total":25,"T":0,"B":0,"colors":{"NV":8,"PK":7,"SW":6,"DG":2,"BB":1,"GW":1},"sizes":{"S":7,"M":9,"L":1,"XL":7,"XXL":1}},"61302":{"cat":"泳裝配件","unit":"件","total":4,"T":0,"B":0,"colors":{"DG":4},"sizes":{"S":2,"M":1,"L":1}},"41503":{"cat":"Junior","unit":"件","total":15,"T":0,"B":15,"colors":{"JT":4,"JB":4,"JW":4,"JL":2,"JP":1},"sizes":{"S":6,"M":9}},"61214":{"cat":"正線兩件式","unit":"套","total":6,"T":6,"B":6,"colors":{"SP":10,"DG":2},"sizes":{"S":2,"L":4,"XL":6}},"43001":{"cat":"洋裝","unit":"套","total":3,"T":0,"B":0,"colors":{"OB":3},"sizes":{"S":2,"L":1}},"41110":{"cat":"正線一件式","unit":"套","total":9,"T":0,"B":0,"colors":{"SW":4,"NV":2,"OG":2,"VG":1},"sizes":{"S":5,"M":3,"L":1}},"63405":{"cat":"洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"S":1}},"31204":{"cat":"正線兩件式","unit":"套","total":2,"T":2,"B":5,"colors":{"LC":4,"MC":2,"SW":1},"sizes":{"S":2,"M":2,"L":2,"XL":1}},"33001":{"cat":"洋裝","unit":"套","total":2,"T":0,"B":0,"colors":{"OB":2},"sizes":{"S":2}},"53G01":{"cat":"特殊洋裝","unit":"套","total":2,"T":0,"B":0,"colors":{"OB":2},"sizes":{"S":2}},"51203":{"cat":"正線兩件式","unit":"套","total":1,"T":2,"B":1,"colors":{"NV":2,"LC":1},"sizes":{"L":2,"XL":1}},"41214":{"cat":"正線兩件式","unit":"套","total":2,"T":3,"B":2,"colors":{"HS":3,"PA":2},"sizes":{"XS":1,"S":4}},"63404":{"cat":"洋裝","unit":"套","total":2,"T":0,"B":0,"colors":{"OB":2},"sizes":{"M":2}},"41207":{"cat":"正線兩件式","unit":"套","total":0,"T":0,"B":1,"colors":{"HS":1},"sizes":{"M":1}},"41213":{"cat":"正線兩件式","unit":"套","total":1,"T":1,"B":1,"colors":{"LC":1,"HS":1},"sizes":{"S":1,"M":1}},"63501":{"cat":"洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"L":1}},"61106":{"cat":"正線一件式","unit":"套","total":1,"T":0,"B":0,"colors":{"EG":1},"sizes":{"S":1}},"61306":{"cat":"泳裝配件","unit":"件","total":1,"T":0,"B":0,"colors":{"DG":1},"sizes":{"L":1}},"53G02":{"cat":"特殊洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"HS":1},"sizes":{"M":1}},"43302":{"cat":"洋裝","unit":"套","total":2,"T":0,"B":0,"colors":{"NV":2},"sizes":{"M":2}},"31106":{"cat":"正線一件式","unit":"套","total":2,"T":0,"B":0,"colors":{"GR":1,"EG":1},"sizes":{"M":2}},"61202":{"cat":"正線兩件式","unit":"套","total":2,"T":2,"B":2,"colors":{"MP":2,"PA":2},"sizes":{"S":2,"M":2}},"41109":{"cat":"正線一件式","unit":"套","total":1,"T":0,"B":0,"colors":{"TO":1},"sizes":{"M":1}}},"2026-06-22":{"61115":{"cat":"正線一件式","unit":"套","total":38,"T":0,"B":0,"colors":{"NV":13,"GN":9,"GB":7,"GP":6,"SW":3},"sizes":{"S":4,"M":20,"L":12,"XL":2}},"41307":{"cat":"泳裝配件","unit":"件","total":30,"T":0,"B":0,"colors":{"NV":7,"GN":6,"GB":5,"SW":4,"BB":3,"SP":3,"GP":1,"PK":1},"sizes":{"F":30}},"31303":{"cat":"泳裝配件","unit":"件","total":28,"T":0,"B":0,"colors":{"GB":7,"GN":7,"NV":5,"SW":5,"GP":3,"EG":1},"sizes":{"S":7,"M":14,"L":7}},"41502":{"cat":"Junior","unit":"件","total":27,"T":27,"B":0,"colors":{"JT":8,"JW":5,"JY":5,"JP":4,"JB":3,"JL":2},"sizes":{"S":27}},"51106":{"cat":"正線一件式","unit":"套","total":19,"T":0,"B":0,"colors":{"NV":6,"SW":5,"PK":5,"BB":2,"MC":1},"sizes":{"XS":1,"S":4,"M":11,"L":2,"XL":1}},"41503":{"cat":"Junior","unit":"件","total":19,"T":0,"B":19,"colors":{"JT":7,"JW":4,"JY":3,"JL":2,"JB":2,"JP":1},"sizes":{"S":5,"M":10,"L":4}},"41501":{"cat":"Junior","unit":"件","total":19,"T":8,"B":11,"colors":{"JT":7,"JV":4,"JY":3,"JP":2,"JB":2,"JL":1},"sizes":{"S":12,"M":7}},"41102":{"cat":"正線一件式","unit":"套","total":18,"T":0,"B":0,"colors":{"SW":5,"PK":5,"NV":3,"DG":3,"BB":1,"SP":1},"sizes":{"S":3,"M":7,"L":3,"XL":4,"XXL":1}},"61109":{"cat":"正線一件式","unit":"套","total":17,"T":0,"B":0,"colors":{"GN":11,"GB":5,"GP":1},"sizes":{"S":2,"M":12,"L":3}},"41504":{"cat":"Junior","unit":"件","total":13,"T":0,"B":13,"colors":{"JP":4,"JB":3,"JL":3,"JY":1,"JW":1,"JT":1},"sizes":{"S":1,"M":3,"L":9}},"61213":{"cat":"正線兩件式","unit":"套","total":11,"T":14,"B":11,"colors":{"SP":18,"DG":7},"sizes":{"S":9,"M":3,"L":10,"XL":1,"XXL":2}},"61111":{"cat":"正線一件式","unit":"套","total":9,"T":0,"B":0,"colors":{"DG":7,"SP":2},"sizes":{"S":2,"M":5,"L":1,"XL":1}},"41110":{"cat":"正線一件式","unit":"套","total":9,"T":0,"B":0,"colors":{"SW":4,"NV":2,"VS":1,"VP":1,"OG":1},"sizes":{"S":3,"M":5,"L":1}},"63404":{"cat":"洋裝","unit":"套","total":8,"T":0,"B":0,"colors":{"OB":6,"GW":2},"sizes":{"S":1,"M":4,"L":1,"XL":2}},"51201":{"cat":"正線兩件式","unit":"套","total":7,"T":9,"B":7,"colors":{"NV":9,"SW":7},"sizes":{"XS":1,"S":6,"M":9}},"61214":{"cat":"正線兩件式","unit":"套","total":6,"T":6,"B":13,"colors":{"SP":19},"sizes":{"S":3,"M":2,"L":11,"XL":2,"XXL":1}},"61303":{"cat":"泳裝配件","unit":"件","total":6,"T":0,"B":0,"colors":{"SP":3,"DG":3},"sizes":{"S":1,"M":2,"XL":3}},"51203":{"cat":"正線兩件式","unit":"套","total":4,"T":4,"B":4,"colors":{"NV":6,"LC":1,"SW":1},"sizes":{"S":2,"M":2,"L":2,"XL":2}},"41107":{"cat":"正線一件式","unit":"套","total":4,"T":0,"B":0,"colors":{"NV":2,"SW":2},"sizes":{"S":2,"M":1,"L":1}},"41105":{"cat":"正線一件式","unit":"套","total":3,"T":0,"B":0,"colors":{"MP":1,"EG":1,"TO":1},"sizes":{"XS":1,"L":1,"XL":1}},"61306":{"cat":"泳裝配件","unit":"件","total":3,"T":0,"B":0,"colors":{"SP":3},"sizes":{"S":2,"M":1}},"61304":{"cat":"泳裝配件","unit":"件","total":2,"T":0,"B":0,"colors":{"SP":1,"DG":1},"sizes":{"S":1,"M":1}},"61106":{"cat":"正線一件式","unit":"套","total":2,"T":0,"B":0,"colors":{"EG":1,"GR":1},"sizes":{"S":1,"XL":1}},"41109":{"cat":"正線一件式","unit":"套","total":2,"T":0,"B":0,"colors":{"TO":2},"sizes":{"S":1,"L":1}},"43001":{"cat":"洋裝","unit":"套","total":1,"T":0,"B":0,"colors":{"OB":1},"sizes":{"S":1}},"31204":{"cat":"正線兩件式","unit":"套","total":1,"T":1,"B":2,"colors":{"SW":2,"LC":1},"sizes":{"S":1,"M":1,"L":1}},"61202":{"cat":"正線兩件式","unit":"套","total":1,"T":1,"B":1,"colors":{"EG":2},"sizes":{"XL":2}},"41214":{"cat":"正線兩件式","unit":"套","total":1,"T":1,"B":1,"colors":{"HS":2},"sizes":{"XS":2}},"41213":{"cat":"正線兩件式","unit":"套","total":1,"T":1,"B":1,"colors":{"LC":2},"sizes":{"M":2}},"41207":{"cat":"正線兩件式","unit":"套","total":0,"T":0,"B":1,"colors":{"HS":1},"sizes":{"M":1}}}}};
+<!-- Footer -->
+<div style="background:#f1f5f9;border-radius:0 0 16px 16px;padding:14px 24px;text-align:center;margin-top:0;">
+  <div style="color:#94a3b8;font-size:11px;">HAI Swimwear 自動報表・每週一 09:00 TWN 發送</div>
+  <div style="color:#cbd5e1;font-size:11px;margin-top:2px;">預覽版・2026-06-29 16:10 TWN</div>
+</div>
 
-const SIZE_ORDER = ["XS","S","M","L","XL","XXL","F"];
-const CAT_TABS = ["全部","泳裝正線","Junior線","泳裝配件","洋裝"];
-const CAT_MAP = {"全部":null,"泳裝正線":["正線一件式","正線兩件式"],"Junior線":["Junior"],"泳裝配件":["泳裝配件"],"洋裝":["洋裝","特殊洋裝"]};
-const BADGE = {
-  "正線一件式":{l:"一件式",bg:"#dbeafe",c:"#1e40af"},
-  "正線兩件式":{l:"兩件式",bg:"#ede9fe",c:"#5b21b6"},
-  "Junior":{l:"Junior",bg:"#fce7f3",c:"#9d174d"},
-  "泳裝配件":{l:"配件",bg:"#d1fae5",c:"#065f46"},
-  "洋裝":{l:"洋裝",bg:"#fef3c7",c:"#92400e"},
-  "特殊洋裝":{l:"特殊洋裝",bg:"#ffedd5",c:"#9a3412"},
-};
-
-let curWeek = DB.weeks[DB.weeks.length - 1];
-let curCat = "全部";
-let curSize = "";
-let expanded = {};
-
-// Build week tabs
-const weekTabsEl = document.getElementById('weekTabs');
-DB.weeks.forEach(w => {
-  const btn = document.createElement('button');
-  btn.className = 'week-tab' + (w === curWeek ? ' active' : '');
-  btn.textContent = DB.week_labels[w];
-  btn.onclick = () => { curWeek = w; expanded = {}; updateWeekTabs(); render(); };
-  weekTabsEl.appendChild(btn);
-});
-
-function updateWeekTabs() {
-  weekTabsEl.querySelectorAll('.week-tab').forEach((btn, i) => {
-    btn.classList.toggle('active', DB.weeks[i] === curWeek);
-  });
-}
-
-// Build cat tabs
-const catBarEl = document.getElementById('catBar');
-CAT_TABS.forEach(t => {
-  const btn = document.createElement('button');
-  btn.className = 'cat-tab' + (t === curCat ? ' active' : '');
-  btn.textContent = t;
-  btn.onclick = () => { curCat = t; updateCatTabs(); render(); };
-  catBarEl.appendChild(btn);
-});
-
-function updateCatTabs() {
-  catBarEl.querySelectorAll('.cat-tab').forEach((btn, i) => {
-    btn.classList.toggle('active', CAT_TABS[i] === curCat);
-  });
-}
-
-// Build size buttons
-const sizeBtnsEl = document.getElementById('sizeBtns');
-["","XS","S","M","L","XL","XXL","F"].forEach(sz => {
-  const btn = document.createElement('button');
-  btn.className = 'size-btn' + (sz === curSize ? ' active' : '');
-  btn.textContent = sz || '全';
-  btn.onclick = () => { curSize = sz; updateSizeBtns(); render(); };
-  sizeBtnsEl.appendChild(btn);
-});
-
-function updateSizeBtns() {
-  sizeBtnsEl.querySelectorAll('.size-btn').forEach((btn, i) => {
-    const sizes = ["","XS","S","M","L","XL","XXL","F"];
-    btn.classList.toggle('active', sizes[i] === curSize);
-  });
-}
-
-function getItems() {
-  const weekData = DB.data[curWeek] || {};
-  const cats = CAT_MAP[curCat];
-  const search = document.getElementById('searchInput').value.toLowerCase();
-  const colorF = document.getElementById('colorSelect').value;
-
-  return Object.entries(weekData)
-    .filter(([ic, d]) => {
-      if (cats && !cats.includes(d.cat)) return false;
-      if (search && !ic.toLowerCase().includes(search)) return false;
-      if (colorF && !d.colors[colorF]) return false;
-      if (curSize && !d.sizes[curSize]) return false;
-      return true;
-    })
-    .map(([ic, d]) => ({ ic, ...d }))
-    .sort((a, b) => b.total - a.total);
-}
-
-function updateColorSelect() {
-  const weekData = DB.data[curWeek] || {};
-  const colors = new Set();
-  Object.values(weekData).forEach(d => Object.keys(d.colors).forEach(c => colors.add(c)));
-  const sel = document.getElementById('colorSelect');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">所有顏色</option>';
-  [...colors].sort().forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c; opt.textContent = c;
-    if (c === cur) opt.selected = true;
-    sel.appendChild(opt);
-  });
-}
-
-function render() {
-  updateColorSelect();
-  const items = getItems();
-  const grandTotal = items.reduce((s, d) => s + d.total, 0);
-  const maxTotal = Math.max(...items.map(d => d.total), 1);
-
-  document.getElementById('summary').innerHTML =
-    `<b>${items.length}</b> 款・合計 <b class="hi">${grandTotal}</b> 件/套・日均 <b>${(grandTotal/7).toFixed(1)}</b>`;
-
-  const list = document.getElementById('itemList');
-  if (items.length === 0) {
-    list.innerHTML = '<div class="empty">沒有符合條件的品項</div>';
-    return;
-  }
-
-  list.innerHTML = items.map(d => {
-    const badge = BADGE[d.cat] || {l:d.cat,bg:"#f1f5f9",c:"#475569"};
-    const isTwo = d.cat === "正線兩件式";
-    const isJr = d.cat === "Junior";
-    const barPct = (d.total / maxTotal * 100).toFixed(1);
-    const expC = expanded[d.ic + '_c'];
-    const expS = expanded[d.ic + '_s'];
-
-    const colorF = document.getElementById('colorSelect').value;
-    const colorEntries = colorF
-      ? Object.entries(d.colors).filter(([c]) => c === colorF)
-      : Object.entries(d.colors).sort((a,b) => b[1]-a[1]);
-    const sizeEntries = curSize
-      ? Object.entries(d.sizes).filter(([s]) => s === curSize)
-      : Object.entries(d.sizes).sort((a,b) => SIZE_ORDER.indexOf(a[0]) - SIZE_ORDER.indexOf(b[0]));
-
-    const tbHtml = (isTwo || isJr) ? `
-      <div class="item-tb">
-        <span class="tb-badge tb-top">上 ${d.T}</span>
-        <span class="tb-badge tb-bot">下 ${d.B}</span>
-      </div>` : '';
-
-    const colorChips = colorEntries.map(([c, qty]) => `
-      <div class="chip">
-        <div class="chip-num">${qty}</div>
-        <div class="chip-label">${c}</div>
-      </div>`).join('');
-
-    const sizeChips = sizeEntries.map(([sz, qty]) => {
-      const pct = d.total > 0 ? Math.round(qty / d.total * 100) : 0;
-      return `<div class="chip">
-        <div class="chip-num">${qty}</div>
-        <div class="chip-label">${sz}</div>
-        <div class="chip-pct">${pct}%</div>
-      </div>`;
-    }).join('');
-
-    return `
-    <div class="item-card">
-      <div class="item-main">
-        <div class="item-id">
-          <div class="item-code">${d.ic}</div>
-          <span class="item-badge" style="background:${badge.bg};color:${badge.c}">${badge.l}</span>
-        </div>
-        <div class="item-bar">
-          <div class="bar-track"><div class="bar-fill" style="width:${barPct}%"></div></div>
-        </div>
-        <div class="item-qty">
-          <span class="qty-num">${d.total}</span><span class="qty-unit">${d.unit}</span>
-        </div>
-        ${tbHtml}
-        <div class="item-avg">
-          <div class="avg-label">日均</div>
-          <div class="avg-num">${(d.total/7).toFixed(2)}</div>
-        </div>
-        <div class="item-btns">
-          <button class="expand-btn ${expC?'active':''}" onclick="toggle('${d.ic}','c')">顏色</button>
-          <button class="expand-btn ${expS?'active':''}" onclick="toggle('${d.ic}','s')">尺寸</button>
-        </div>
-      </div>
-      <div class="expand-panel ${expC?'open':''}">
-        <div class="panel-label">顏色銷量（本週）</div>
-        <div class="chips">${colorChips}</div>
-      </div>
-      <div class="expand-panel ${expS?'open':''}">
-        <div class="panel-label">尺寸銷量（本週）</div>
-        <div class="chips">${sizeChips}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function toggle(ic, key) {
-  expanded[ic + '_' + key] = !expanded[ic + '_' + key];
-  render();
-}
-
-render();
-</script>
-</body>
-</html>
+</div>
+</body></html>
