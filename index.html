@@ -1,58 +1,137 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-<head><meta charset="UTF-8"><title>HAI Swimwear 週銷量報表</title></head>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HAI Swimwear 週銷量報表</title>
+
+<script>
+function applyFilters() {
+  var cat   = document.getElementById('f-cat').value;
+  var color = document.getElementById('f-color').value.toUpperCase().trim();
+  var size  = document.getElementById('f-size').value;
+  var pc    = document.getElementById('f-pc').value.toUpperCase().trim();
+
+  // 先顯示所有行
+  document.querySelectorAll('.item-row').forEach(function(row) {
+    var rCat    = row.dataset.cat;
+    var rPc     = row.dataset.pc;
+    var rColors = (row.dataset.colors || '').toUpperCase();
+    var rSizes  = (row.dataset.sizes  || '').toUpperCase();
+
+    var show = true;
+    if (cat   && rCat !== cat) show = false;
+    if (color && rColors.indexOf(color) === -1) show = false;
+    if (size  && rSizes.indexOf(size)   === -1) show = false;
+    if (pc    && rPc.indexOf(pc)        === -1) show = false;
+    row.style.display = show ? '' : 'none';
+  });
+
+  // 分類標題：若該分類下沒有任何可見 item-row 就隱藏
+  document.querySelectorAll('.cat-header').forEach(function(header) {
+    var hCat = header.dataset.cat;
+    if (cat && hCat !== cat) { header.style.display = 'none'; return; }
+    var hasVisible = Array.from(
+      document.querySelectorAll('.item-row[data-cat="' + hCat + '"]')
+    ).some(function(r){ return r.style.display !== 'none'; });
+    header.style.display = hasVisible ? '' : 'none';
+  });
+
+  // 無結果提示
+  var noRes = document.getElementById('no-results');
+  var anyVisible = Array.from(document.querySelectorAll('.item-row'))
+    .some(function(r){ return r.style.display !== 'none'; });
+  noRes.style.display = anyVisible ? 'none' : '';
+}
+
+function clearFilters() {
+  ['f-cat','f-color','f-size','f-pc'].forEach(function(id){
+    document.getElementById(id).value = '';
+  });
+  applyFilters();
+}
+</script>
+
+</head>
 <body style="margin:0;padding:0;background:#f8f9fb;font-family:'Helvetica Neue',Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9fb;">
-<tr><td align="center" style="padding:24px 16px;">
-<table width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;">
+<div style="max-width:760px;margin:0 auto;padding:24px 16px;">
 
   <!-- Header -->
-  <tr>
-    <td style="background:#0f172a;border-radius:12px 12px 0 0;padding:24px 28px;">
-      <div style="color:#f8fafc;font-size:22px;font-weight:800;letter-spacing:-0.5px;">HAI Swimwear</div>
-      <div style="color:#94a3b8;font-size:13px;margin-top:4px;">週銷量報表・2026/06/22（一）~ 2026/06/28（日）</div>
-    </td>
-  </tr>
+  <div style="background:#0f172a;border-radius:12px 12px 0 0;padding:24px 28px;">
+    <div style="color:#f8fafc;font-size:22px;font-weight:800;letter-spacing:-0.5px;">HAI Swimwear</div>
+    <div style="color:#94a3b8;font-size:13px;margin-top:4px;">週銷量報表・2026/06/22（一）~ 2026/06/28（日）</div>
+  </div>
 
   <!-- Summary Cards -->
-  <tr>
-    <td style="background:#1e293b;padding:16px 28px 20px;">
-      <table width="100%" cellpadding="0" cellspacing="0">
-        <tr>
-          <td style="width:50%;padding-right:8px;">
-            <div style="background:#334155;border-radius:8px;padding:14px;">
-              <div style="color:#94a3b8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">本週總銷量</div>
-              <div style="color:#f8fafc;font-size:28px;font-weight:800;margin-top:4px;">335.0</div>
-              <div style="color:#64748b;font-size:12px;">件 / 套</div>
-            </div>
-          </td>
-          <td style="width:50%;padding-left:8px;">
-            <div style="background:#334155;border-radius:8px;padding:14px;">
-              <div style="color:#94a3b8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">日均銷量</div>
-              <div style="color:#f8fafc;font-size:28px;font-weight:800;margin-top:4px;">47.9</div>
-              <div style="color:#64748b;font-size:12px;">件·套 / 天（共 7 天）</div>
-            </div>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
+  <div style="background:#1e293b;padding:16px 28px 20px;">
+    <div style="display:flex;gap:12px;">
+      <div style="flex:1;background:#334155;border-radius:8px;padding:14px;">
+        <div style="color:#94a3b8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">本週總銷量</div>
+        <div style="color:#f8fafc;font-size:28px;font-weight:800;margin-top:4px;">332.0</div>
+        <div style="color:#64748b;font-size:12px;">件 / 套</div>
+      </div>
+      <div style="flex:1;background:#334155;border-radius:8px;padding:14px;">
+        <div style="color:#94a3b8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">日均銷量</div>
+        <div style="color:#f8fafc;font-size:28px;font-weight:800;margin-top:4px;">47.4</div>
+        <div style="color:#64748b;font-size:12px;">件·套 / 天（共 7 天）</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 篩選器 -->
+  <div style="background:#ffffff;border-top:1px solid #e2e8f0;padding:16px 28px;">
+    <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:10px;">🔍 篩選</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+      <div>
+        <div style="font-size:11px;color:#64748b;margin-bottom:4px;">分類</div>
+        <select id="f-cat" onchange="applyFilters()"
+          style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;color:#0f172a;background:#f8f9fb;min-width:140px;">
+          <option value="">全部分類</option>
+          <option value="regular_one_piece">泳裝正線・一件式</option><option value="regular_two_piece">泳裝正線・兩件式</option><option value="junior">泳裝 Junior 線</option><option value="dress">洋裝 / Cover-up</option><option value="accessory">泳裝配件</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#64748b;margin-bottom:4px;">型號</div>
+        <input id="f-pc" oninput="applyFilters()" placeholder="例: 41102"
+          style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;color:#0f172a;background:#f8f9fb;width:100px;">
+      </div>
+      <div>
+        <div style="font-size:11px;color:#64748b;margin-bottom:4px;">顏色代碼</div>
+        <select id="f-color" onchange="applyFilters()"
+          style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;color:#0f172a;background:#f8f9fb;min-width:100px;">
+          <option value="">全部顏色</option>
+          <option value="2">2</option><option value="3">3</option><option value="BK">BK</option><option value="BL">BL</option><option value="GN">GN</option><option value="JY">JY</option><option value="NV">NV</option><option value="PK">PK</option><option value="RD">RD</option><option value="SW">SW</option><option value="WH">WH</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#64748b;margin-bottom:4px;">尺寸</div>
+        <select id="f-size" onchange="applyFilters()"
+          style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;color:#0f172a;background:#f8f9fb;min-width:80px;">
+          <option value="">全部尺寸</option>
+          <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option><option value="F">F</option>
+        </select>
+      </div>
+      <button onclick="clearFilters()"
+        style="padding:7px 16px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;color:#475569;cursor:pointer;">
+        清除篩選
+      </button>
+    </div>
+  </div>
 
   <!-- Main Table -->
-  <tr>
-    <td style="background:#ffffff;padding:16px 28px 24px;border-radius:0 0 0 0;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-        
-        <tr>
+  <div style="background:#ffffff;padding:0 28px 24px;">
+    <table id="main-table" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+      
+        <tr class="cat-header" data-cat="regular_one_piece">
           <td colspan="5" style="padding:20px 0 6px;">
             <div style="display:flex;align-items:center;gap:8px;">
               <div style="width:4px;height:20px;background:#0ea5e9;border-radius:2px;"></div>
               <span style="font-size:15px;font-weight:700;color:#0f172a;">泳裝正線・一件式</span>
-              <span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;color:#0ea5e9;background:#0ea5e91a;">本週 163.0 件</span>
+              <span class="cat-badge" data-cat="regular_one_piece" style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;color:#0ea5e9;background:#0ea5e91a;">本週 160.0 件</span>
             </div>
           </td>
         </tr>
-        <tr style="background:#f1f5f9;">
+        <tr class="cat-header" data-cat="regular_one_piece" style="background:#f1f5f9;">
           <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;font-weight:600;">品項</th>
           <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">週銷量</th>
           <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">日均銷量</th>
@@ -60,179 +139,12 @@
           <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">預估可售天數</th>
         </tr>
         
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">51107</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Strapless One</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">YL 3.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">3.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.43 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">16</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">37.3 天</span></td>
-            </tr>
-            
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">61115</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Reversible One</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">RD 3.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">3.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.43 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">14</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">32.7 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">41107</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Plunge One</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 5.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">5.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.71 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">22</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">30.8 天</span></td>
-            </tr>
-            
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">41110</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Bandeau One</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">PK 5.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">5.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.71 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">20</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">28.0 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">51105</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Crisscross One</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">WH 3.0件</span> <span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 2.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">5.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.71 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">18</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">25.2 天</span></td>
-            </tr>
-            
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">61109</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Minimal One</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 5.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">5.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.71 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">28</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">39.2 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">41103</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Halter One</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 5.0件</span> <span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 1.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">6.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.86 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">30</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">35.0 天</span></td>
-            </tr>
-            
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">41109</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Ruffle One</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">RD 6.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">6.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.86 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">28</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">32.7 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">51106</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Deep V One</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">GN 7.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">7.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">1.0 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">24</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">24.0 天</span></td>
-            </tr>
-            
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">61111</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Cut-Out One</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">WH 7.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">7.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">1.0 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">32</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">32.0 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">61106</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Luxe One</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 9.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">9.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">1.29 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">40</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">31.1 天</span></td>
-            </tr>
-            
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">41105</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Twist One</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">WH 7.0件</span> <span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 5.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">12.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">1.71 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">38</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">22.2 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">41101</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Classic One</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 8.0件</span> <span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 6.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">14.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">2.0 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">45</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">22.5 天</span></td>
-            </tr>
-            
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">51102</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Mesh One</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 10.0件</span> <span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 5.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">15.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">2.14 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">35</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">16.3 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+            <tr class="item-row" data-cat="regular_one_piece" data-pc="41102" data-colors="NV SW BK" data-sizes="L M S"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
               <td style="padding:10px 12px;">
                 <div style="font-weight:600;color:#0f172a;">41102</div>
                 <div style="font-size:12px;color:#64748b;">HAI | Scoop One</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 27.0件</span> <span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 20.0件</span> <span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">SW 14.0件</span></div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 27.0件</span> <span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 20.0件</span> <span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">SW 14.0件</span></div>
               </td>
               <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">61.0 件</td>
               <td style="padding:10px 12px;text-align:center;color:#475569;">8.71 件/天</td>
@@ -240,314 +152,142 @@
               <td style="padding:10px 12px;text-align:center;"><span style="color:#f59e0b;font-weight:700;">9.4 天</span></td>
             </tr>
             
-        <tr>
-          <td colspan="5" style="padding:20px 0 6px;">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div style="width:4px;height:20px;background:#8b5cf6;border-radius:2px;"></div>
-              <span style="font-size:15px;font-weight:700;color:#0f172a;">泳裝正線・兩件式</span>
-              <span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;color:#8b5cf6;background:#8b5cf61a;">本週 65.0 套</span>
-            </div>
-          </td>
-        </tr>
-        <tr style="background:#f1f5f9;">
-          <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;font-weight:600;">品項</th>
-          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">週銷量</th>
-          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">日均銷量</th>
-          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">現有庫存</th>
-          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">預估可售天數</th>
-        </tr>
-        
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+            <tr class="item-row" data-cat="regular_one_piece" data-pc="51102" data-colors="NV BK" data-sizes="L M"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
               <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">61214</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Twist Bikini</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">RD 2.5套</span></div>
+                <div style="font-weight:600;color:#0f172a;">51102</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Mesh One</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 10.0件</span> <span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 5.0件</span></div>
               </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">2.5 套</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.36 套/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">14</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">39.2 天</span></td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">15.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">2.14 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">35</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">16.3 天</span></td>
             </tr>
             
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+            <tr class="item-row" data-cat="regular_one_piece" data-pc="41101" data-colors="NV BK" data-sizes="M S"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
               <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">51203</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Halter Bikini</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">GN 3.5套</span></div>
+                <div style="font-weight:600;color:#0f172a;">41101</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Classic One</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 8.0件</span> <span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 6.0件</span></div>
               </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">3.5 套</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.5 套/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">20</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">40.0 天</span></td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">14.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">2.0 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">45</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">22.5 天</span></td>
             </tr>
             
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+            <tr class="item-row" data-cat="regular_one_piece" data-pc="41105" data-colors="WH NV" data-sizes="L M"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
               <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">61213</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Minimal Bikini</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 3.5套</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">3.5 套</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.5 套/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">18</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">36.0 天</span></td>
-            </tr>
-            
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">41214</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Ruched Bikini</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">PK 5.0套</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">5.0 套</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.71 套/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">26</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">36.4 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">41213</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Bandeau Bikini</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">WH 5.5套</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">5.5 套</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.79 套/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">38</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">48.4 天</span></td>
-            </tr>
-            
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">61202</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Luxe Bikini</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BL 7.5套</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">7.5 套</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">1.07 套/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">36</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">33.6 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">41208</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Triangle Bikini</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">SW 9.0套</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">9.0 套</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">1.29 套/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">52</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">40.4 天</span></td>
-            </tr>
-            
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">51201</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Mesh Bikini</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">SW 11.0套</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">11.0 套</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">1.57 套/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">44</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">28.0 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">41207</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Classic Bikini</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 13.0套</span> <span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 4.5套</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">17.5 套</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">2.5 套/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">60</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">24.0 天</span></td>
-            </tr>
-            
-        <tr>
-          <td colspan="5" style="padding:20px 0 6px;">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div style="width:4px;height:20px;background:#ec4899;border-radius:2px;"></div>
-              <span style="font-size:15px;font-weight:700;color:#0f172a;">泳裝 Junior 線</span>
-              <span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;color:#ec4899;background:#ec48991a;">本週 40.0 件</span>
-            </div>
-          </td>
-        </tr>
-        <tr style="background:#f1f5f9;">
-          <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;font-weight:600;">品項</th>
-          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">週銷量</th>
-          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">日均銷量</th>
-          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">現有庫存</th>
-          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">預估可售天數</th>
-        </tr>
-        
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">41504</div>
-                <div style="font-size:12px;color:#64748b;">HAI Junior | Basic Set</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 3.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">3.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.43 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">12</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">28.0 天</span></td>
-            </tr>
-            
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">41503</div>
-                <div style="font-size:12px;color:#64748b;">HAI Junior | Surf Set</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">SW 9.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">9.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">1.29 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">18</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#f59e0b;font-weight:700;">14.0 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">41502</div>
-                <div style="font-size:12px;color:#64748b;">HAI Junior | Cup Set</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">JY 12.0件</span></div>
+                <div style="font-weight:600;color:#0f172a;">41105</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Twist One</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">WH 7.0件</span> <span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 5.0件</span></div>
               </td>
               <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">12.0 件</td>
               <td style="padding:10px 12px;text-align:center;color:#475569;">1.71 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">22</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#f59e0b;font-weight:700;">12.8 天</span></td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">38</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">22.2 天</span></td>
             </tr>
             
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+            <tr class="item-row" data-cat="regular_one_piece" data-pc="61106" data-colors="NV" data-sizes="L M"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
               <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">41501</div>
-                <div style="font-size:12px;color:#64748b;">HAI Junior | Classic Set</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">JY 16.0件</span></div>
+                <div style="font-weight:600;color:#0f172a;">61106</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Luxe One</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 9.0件</span></div>
               </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">16.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">2.29 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">9.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">1.29 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">40</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">31.1 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="regular_one_piece" data-pc="51106" data-colors="GN" data-sizes="L M"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">51106</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Deep V One</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">GN 7.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">7.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">1.0 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">24</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">24.0 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="regular_one_piece" data-pc="61111" data-colors="WH" data-sizes="L M"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">61111</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Cut-Out One</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">WH 7.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">7.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">1.0 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">32</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">32.0 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="regular_one_piece" data-pc="41103" data-colors="NV BK" data-sizes="M S"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">41103</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Halter One</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 5.0件</span> <span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 1.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">6.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.86 件/天</td>
               <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">30</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#f59e0b;font-weight:700;">13.1 天</span></td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">35.0 天</span></td>
             </tr>
             
-        <tr>
-          <td colspan="5" style="padding:20px 0 6px;">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div style="width:4px;height:20px;background:#f59e0b;border-radius:2px;"></div>
-              <span style="font-size:15px;font-weight:700;color:#0f172a;">洋裝 / Cover-up</span>
-              <span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;color:#f59e0b;background:#f59e0b1a;">本週 53.0 件</span>
-            </div>
-          </td>
-        </tr>
-        <tr style="background:#f1f5f9;">
-          <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;font-weight:600;">品項</th>
-          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">週銷量</th>
-          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">日均銷量</th>
-          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">現有庫存</th>
-          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">預估可售天數</th>
-        </tr>
-        
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+            <tr class="item-row" data-cat="regular_one_piece" data-pc="41109" data-colors="RD" data-sizes="L M"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
               <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">63404</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Sunscreen SPF50</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 1.0件</span></div>
+                <div style="font-weight:600;color:#0f172a;">41109</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Ruffle One</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">RD 6.0件</span></div>
               </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">1.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.14 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">0</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#ef4444;font-weight:700;">0.0 天</span></td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">6.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.86 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">28</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">32.7 天</span></td>
             </tr>
             
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+            <tr class="item-row" data-cat="regular_one_piece" data-pc="41107" data-colors="BK" data-sizes="M S"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
               <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">63405</div>
-                <div style="font-size:12px;color:#64748b;">HAI | After</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 1.0件</span></div>
+                <div style="font-weight:600;color:#0f172a;">41107</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Plunge One</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 5.0件</span></div>
               </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">1.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.14 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">0</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#ef4444;font-weight:700;">0.0 天</span></td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">5.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.71 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">22</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">30.8 天</span></td>
             </tr>
             
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+            <tr class="item-row" data-cat="regular_one_piece" data-pc="41110" data-colors="PK" data-sizes="L M"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
               <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">53M03</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Minimal Dress III</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">2 2.0件</span></div>
+                <div style="font-weight:600;color:#0f172a;">41110</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Bandeau One</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">PK 5.0件</span></div>
               </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">2.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.29 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">8</td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">5.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.71 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">20</td>
               <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">28.0 天</span></td>
             </tr>
             
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+            <tr class="item-row" data-cat="regular_one_piece" data-pc="51105" data-colors="WH BK" data-sizes="M"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
               <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">53G02</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Garden Dress II</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">2 2.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">2.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.29 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">8</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">28.0 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">43302</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Maxi Dress</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 3.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">3.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.43 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">10</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">23.3 天</span></td>
-            </tr>
-            
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">53E01</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Embroidered Dress</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">2 2.0件</span> <span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">3 1.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">3.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.43 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">12</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">28.0 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">53R01</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Resort Dress</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">2 3.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">3.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.43 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">10</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">23.3 天</span></td>
-            </tr>
-            
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">53G01</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Garden Cover</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">2 3.0件</span> <span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">3 1.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">4.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.57 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">15</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">26.2 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">43006</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Shirt Dress</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">WH 5.0件</span></div>
+                <div style="font-weight:600;color:#0f172a;">51105</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Crisscross One</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">WH 3.0件</span> <span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 2.0件</span></div>
               </td>
               <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">5.0 件</td>
               <td style="padding:10px 12px;text-align:center;color:#475569;">0.71 件/天</td>
@@ -555,64 +295,55 @@
               <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">25.2 天</span></td>
             </tr>
             
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+            <tr class="item-row" data-cat="regular_one_piece" data-pc="61109" data-colors="BK" data-sizes="L M"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
               <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">53M01</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Minimal Dress</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">2 3.0件</span> <span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">3 2.0件</span></div>
+                <div style="font-weight:600;color:#0f172a;">61109</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Minimal One</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 5.0件</span></div>
               </td>
               <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">5.0 件</td>
               <td style="padding:10px 12px;text-align:center;color:#475569;">0.71 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">20</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">28.0 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">43007</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Mini Dress</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">PK 6.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">6.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.86 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">22</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">25.7 天</span></td>
-            </tr>
-            
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">53M02</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Minimal Dress II</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">2 4.0件</span> <span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">3 2.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">6.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.86 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">14</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">16.3 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">43001</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Wrap Dress</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 8.0件</span> <span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 4.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">12.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">1.71 件/天</td>
               <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">28</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">16.3 天</span></td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">39.2 天</span></td>
             </tr>
             
-        <tr>
+            <tr class="item-row" data-cat="regular_one_piece" data-pc="61115" data-colors="RD" data-sizes="L M"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">61115</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Reversible One</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">RD 3.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">3.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.43 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">14</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">32.7 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="regular_one_piece" data-pc="51107" data-colors="" data-sizes=""
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">51107</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Strapless One-Piece</div>
+                
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">0.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">16</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#94a3b8;">—</span></td>
+            </tr>
+            
+        <tr class="cat-header" data-cat="regular_two_piece">
           <td colspan="5" style="padding:20px 0 6px;">
             <div style="display:flex;align-items:center;gap:8px;">
-              <div style="width:4px;height:20px;background:#94a3b8;border-radius:2px;"></div>
-              <span style="font-size:15px;font-weight:700;color:#0f172a;">泳裝配件</span>
-              <span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;color:#94a3b8;background:#94a3b81a;">本週 14.0 件</span>
+              <div style="width:4px;height:20px;background:#8b5cf6;border-radius:2px;"></div>
+              <span style="font-size:15px;font-weight:700;color:#0f172a;">泳裝正線・兩件式</span>
+              <span class="cat-badge" data-cat="regular_two_piece" style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;color:#8b5cf6;background:#8b5cf61a;">本週 65.0 套</span>
             </div>
           </td>
         </tr>
-        <tr style="background:#f1f5f9;">
+        <tr class="cat-header" data-cat="regular_two_piece" style="background:#f1f5f9;">
           <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;font-weight:600;">品項</th>
           <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">週銷量</th>
           <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">日均銷量</th>
@@ -620,7 +351,475 @@
           <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">預估可售天數</th>
         </tr>
         
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+            <tr class="item-row" data-cat="regular_two_piece" data-pc="41207" data-colors="NV BK" data-sizes="L M"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">41207</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Classic Bikini</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 13.0套</span> <span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 4.5套</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">17.5 套</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">2.5 套/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">60</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">24.0 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="regular_two_piece" data-pc="51201" data-colors="SW" data-sizes="L M"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">51201</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Mesh Bikini</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">SW 11.0套</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">11.0 套</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">1.57 套/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">44</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">28.0 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="regular_two_piece" data-pc="41208" data-colors="SW" data-sizes="L M"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">41208</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Triangle Bikini</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">SW 9.0套</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">9.0 套</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">1.29 套/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">52</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">40.4 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="regular_two_piece" data-pc="61202" data-colors="BL" data-sizes="L M"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">61202</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Luxe Bikini</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BL 7.5套</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">7.5 套</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">1.07 套/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">36</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">33.6 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="regular_two_piece" data-pc="41213" data-colors="WH" data-sizes="L M"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">41213</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Bandeau Bikini</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">WH 5.5套</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">5.5 套</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.79 套/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">38</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">48.4 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="regular_two_piece" data-pc="41214" data-colors="PK" data-sizes="L M"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">41214</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Ruched Bikini</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">PK 5.0套</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">5.0 套</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.71 套/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">26</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">36.4 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="regular_two_piece" data-pc="51203" data-colors="GN" data-sizes="M"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">51203</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Halter Bikini</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">GN 3.5套</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">3.5 套</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.5 套/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">20</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">40.0 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="regular_two_piece" data-pc="61213" data-colors="NV" data-sizes="M"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">61213</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Minimal Bikini</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 3.5套</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">3.5 套</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.5 套/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">18</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">36.0 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="regular_two_piece" data-pc="61214" data-colors="RD" data-sizes="M"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">61214</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Twist Bikini</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">RD 2.5套</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">2.5 套</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.36 套/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">14</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">39.2 天</span></td>
+            </tr>
+            
+        <tr class="cat-header" data-cat="junior">
+          <td colspan="5" style="padding:20px 0 6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:4px;height:20px;background:#ec4899;border-radius:2px;"></div>
+              <span style="font-size:15px;font-weight:700;color:#0f172a;">泳裝 Junior 線</span>
+              <span class="cat-badge" data-cat="junior" style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;color:#ec4899;background:#ec48991a;">本週 40.0 件</span>
+            </div>
+          </td>
+        </tr>
+        <tr class="cat-header" data-cat="junior" style="background:#f1f5f9;">
+          <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;font-weight:600;">品項</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">週銷量</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">日均銷量</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">現有庫存</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">預估可售天數</th>
+        </tr>
+        
+            <tr class="item-row" data-cat="junior" data-pc="41501" data-colors="JY" data-sizes="M S"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">41501</div>
+                <div style="font-size:12px;color:#64748b;">HAI Junior | Classic Set</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">JY 16.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">16.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">2.29 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">30</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#f59e0b;font-weight:700;">13.1 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="junior" data-pc="41502" data-colors="JY" data-sizes="M S"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">41502</div>
+                <div style="font-size:12px;color:#64748b;">HAI Junior | Cup Set</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">JY 12.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">12.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">1.71 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">22</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#f59e0b;font-weight:700;">12.8 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="junior" data-pc="41503" data-colors="SW" data-sizes="M S"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">41503</div>
+                <div style="font-size:12px;color:#64748b;">HAI Junior | Surf Set</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">SW 9.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">9.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">1.29 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">18</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#f59e0b;font-weight:700;">14.0 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="junior" data-pc="41504" data-colors="BK" data-sizes="S"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">41504</div>
+                <div style="font-size:12px;color:#64748b;">HAI Junior | Basic Set</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 3.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">3.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.43 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">12</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">28.0 天</span></td>
+            </tr>
+            
+        <tr class="cat-header" data-cat="dress">
+          <td colspan="5" style="padding:20px 0 6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:4px;height:20px;background:#f59e0b;border-radius:2px;"></div>
+              <span style="font-size:15px;font-weight:700;color:#0f172a;">洋裝 / Cover-up</span>
+              <span class="cat-badge" data-cat="dress" style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;color:#f59e0b;background:#f59e0b1a;">本週 53.0 件</span>
+            </div>
+          </td>
+        </tr>
+        <tr class="cat-header" data-cat="dress" style="background:#f1f5f9;">
+          <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;font-weight:600;">品項</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">週銷量</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">日均銷量</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">現有庫存</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">預估可售天數</th>
+        </tr>
+        
+            <tr class="item-row" data-cat="dress" data-pc="43001" data-colors="NV BK" data-sizes="L M"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">43001</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Wrap Dress</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 8.0件</span> <span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 4.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">12.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">1.71 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">28</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">16.3 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="dress" data-pc="43007" data-colors="PK" data-sizes="L M"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">43007</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Mini Dress</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">PK 6.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">6.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.86 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">22</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">25.7 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="dress" data-pc="53M02" data-colors="2 3" data-sizes=""
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">53M02</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Minimal Dress II</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">2 4.0件</span> <span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">3 2.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">6.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.86 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">14</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">16.3 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="dress" data-pc="43006" data-colors="WH" data-sizes="L M"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">43006</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Shirt Dress</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">WH 5.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">5.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.71 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">18</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">25.2 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="dress" data-pc="53M01" data-colors="2 3" data-sizes=""
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">53M01</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Minimal Dress</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">2 3.0件</span> <span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">3 2.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">5.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.71 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">20</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">28.0 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="dress" data-pc="53G01" data-colors="2 3" data-sizes=""
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">53G01</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Garden Cover</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">2 3.0件</span> <span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">3 1.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">4.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.57 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">15</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">26.2 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="dress" data-pc="43302" data-colors="BK" data-sizes="L M"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">43302</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Maxi Dress</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 3.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">3.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.43 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">10</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">23.3 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="dress" data-pc="53E01" data-colors="2 3" data-sizes=""
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">53E01</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Embroidered Dress</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">2 2.0件</span> <span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">3 1.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">3.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.43 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">12</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">28.0 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="dress" data-pc="53R01" data-colors="2" data-sizes=""
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">53R01</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Resort Dress</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">2 3.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">3.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.43 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">10</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">23.3 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="dress" data-pc="53M03" data-colors="2" data-sizes=""
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">53M03</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Minimal Dress III</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">2 2.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">2.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.29 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">8</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">28.0 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="dress" data-pc="53G02" data-colors="2" data-sizes=""
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">53G02</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Garden Dress II</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">2 2.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">2.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.29 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">8</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">28.0 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="dress" data-pc="63404" data-colors="NV" data-sizes="S"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">63404</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Sunscreen SPF50</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 1.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">1.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.14 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">0</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#ef4444;font-weight:700;">0.0 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="dress" data-pc="63405" data-colors="BK" data-sizes="S"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">63405</div>
+                <div style="font-size:12px;color:#64748b;">HAI | After</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 1.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">1.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.14 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">0</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#ef4444;font-weight:700;">0.0 天</span></td>
+            </tr>
+            
+        <tr class="cat-header" data-cat="accessory">
+          <td colspan="5" style="padding:20px 0 6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:4px;height:20px;background:#94a3b8;border-radius:2px;"></div>
+              <span style="font-size:15px;font-weight:700;color:#0f172a;">泳裝配件</span>
+              <span class="cat-badge" data-cat="accessory" style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;color:#94a3b8;background:#94a3b81a;">本週 14.0 件</span>
+            </div>
+          </td>
+        </tr>
+        <tr class="cat-header" data-cat="accessory" style="background:#f1f5f9;">
+          <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;font-weight:600;">品項</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">週銷量</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">日均銷量</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">現有庫存</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">預估可售天數</th>
+        </tr>
+        
+            <tr class="item-row" data-cat="accessory" data-pc="41305" data-colors="NV" data-sizes="M S"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">41305</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Swim Sarong</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 5.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">5.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.71 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">18</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">25.2 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="accessory" data-pc="41306" data-colors="BK" data-sizes="M S"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">41306</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Swim Cap</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 3.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">3.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.43 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">12</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">28.0 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="accessory" data-pc="61302" data-colors="NV" data-sizes="S"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">61302</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Luxe Sarong</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 2.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">2.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.29 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">10</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">35.0 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="accessory" data-pc="61304" data-colors="SW" data-sizes="S"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">61304</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Surf Bag</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">SW 2.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">2.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.29 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">14</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">49.0 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="accessory" data-pc="41307" data-colors="WH" data-sizes="S"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">41307</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Beach Bag</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">WH 1.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">1.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.14 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">8</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">56.0 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="accessory" data-pc="61303" data-colors="BK" data-sizes="S"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px 12px;">
+                <div style="font-weight:600;color:#0f172a;">61303</div>
+                <div style="font-size:12px;color:#64748b;">HAI | Luxe Cap</div>
+                <div style="margin-top:4px;"><span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 1.0件</span></div>
+              </td>
+              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">1.0 件</td>
+              <td style="padding:10px 12px;text-align:center;color:#475569;">0.14 件/天</td>
+              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">6</td>
+              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">42.0 天</span></td>
+            </tr>
+            
+            <tr class="item-row" data-cat="accessory" data-pc="61306" data-colors="" data-sizes=""
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
               <td style="padding:10px 12px;">
                 <div style="font-weight:600;color:#0f172a;">61306</div>
                 <div style="font-size:12px;color:#64748b;">HAI | Beach Tote</div>
@@ -632,7 +831,8 @@
               <td style="padding:10px 12px;text-align:center;"><span style="color:#94a3b8;">—</span></td>
             </tr>
             
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+            <tr class="item-row" data-cat="accessory" data-pc="63404" data-colors="" data-sizes="S"
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
               <td style="padding:10px 12px;">
                 <div style="font-weight:600;color:#0f172a;">63404</div>
                 <div style="font-size:12px;color:#64748b;">HAI | Sunscreen SPF50</div>
@@ -644,7 +844,8 @@
               <td style="padding:10px 12px;text-align:center;"><span style="color:#94a3b8;">—</span></td>
             </tr>
             
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+            <tr class="item-row" data-cat="accessory" data-pc="63405" data-colors="" data-sizes="S"
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
               <td style="padding:10px 12px;">
                 <div style="font-weight:600;color:#0f172a;">63405</div>
                 <div style="font-size:12px;color:#64748b;">HAI | After-Sun Gel</div>
@@ -656,7 +857,8 @@
               <td style="padding:10px 12px;text-align:center;"><span style="color:#94a3b8;">—</span></td>
             </tr>
             
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
+            <tr class="item-row" data-cat="accessory" data-pc="63501" data-colors="" data-sizes=""
+                style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
               <td style="padding:10px 12px;">
                 <div style="font-weight:600;color:#0f172a;">63501</div>
                 <div style="font-size:12px;color:#64748b;">HAI | Swim Goggles</div>
@@ -668,7 +870,8 @@
               <td style="padding:10px 12px;text-align:center;"><span style="color:#94a3b8;">—</span></td>
             </tr>
             
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
+            <tr class="item-row" data-cat="accessory" data-pc="63410" data-colors="" data-sizes=""
+                style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
               <td style="padding:10px 12px;">
                 <div style="font-weight:600;color:#0f172a;">63410</div>
                 <div style="font-size:12px;color:#64748b;">HAI | Waterproof Pouch</div>
@@ -680,98 +883,29 @@
               <td style="padding:10px 12px;text-align:center;"><span style="color:#94a3b8;">—</span></td>
             </tr>
             
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">41307</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Beach Bag</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">WH 1.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">1.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.14 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">8</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">56.0 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">61303</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Luxe Cap</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 1.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">1.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.14 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">6</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">42.0 天</span></td>
-            </tr>
-            
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">61302</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Luxe Sarong</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 2.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">2.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.29 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">10</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">35.0 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">61304</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Surf Bag</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">SW 2.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">2.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.29 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">14</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">49.0 天</span></td>
-            </tr>
-            
-            <tr style="background:#fafafa;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">41306</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Swim Cap</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">BK 3.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">3.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.43 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">12</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">28.0 天</span></td>
-            </tr>
-            
-            <tr style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-              <td style="padding:10px 12px;">
-                <div style="font-weight:600;color:#0f172a;">41305</div>
-                <div style="font-size:12px;color:#64748b;">HAI | Swim Sarong</div>
-                <div style="margin-top:4px;"><span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">NV 5.0件</span></div>
-              </td>
-              <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">5.0 件</td>
-              <td style="padding:10px 12px;text-align:center;color:#475569;">0.71 件/天</td>
-              <td style="padding:10px 12px;text-align:center;font-weight:600;color:#0f172a;">18</td>
-              <td style="padding:10px 12px;text-align:center;"><span style="color:#22c55e;font-weight:700;">25.2 天</span></td>
-            </tr>
-            
-      </table>
-    </td>
-  </tr>
+      <tr id="no-results" style="display:none;">
+        <td colspan="5" style="padding:32px;text-align:center;color:#94a3b8;font-size:14px;">
+          找不到符合篩選條件的品項
+        </td>
+      </tr>
+    </table>
+  </div>
 
   <!-- Additional Analysis -->
-  <tr>
-    <td style="background:#ffffff;padding:0 28px 28px;">
-      <div style="border-top:1px solid #e2e8f0;padding-top:20px;">
-        <h3 style="margin:0 0 10px;color:#0f172a;font-size:14px;">🔥 本週熱銷 Top 5</h3>
-        <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;">
-          <tr style="background:#f8f9fb;">
-            <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;">品項</th>
-            <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;">銷量</th>
-            <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;">類別</th>
-          </tr>
-          <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 12px;">1. <b>41102</b> <span style="color:#64748b;font-size:12px;">HAI | Scoop One</span></td><td style="padding:8px 12px;text-align:center;font-weight:700;">61.0</td><td style="padding:8px 12px;text-align:center;color:#64748b;">泳裝正線・一件式</td></tr><tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 12px;">2. <b>41207</b> <span style="color:#64748b;font-size:12px;">HAI | Classic Bikini</span></td><td style="padding:8px 12px;text-align:center;font-weight:700;">17.5</td><td style="padding:8px 12px;text-align:center;color:#64748b;">泳裝正線・兩件式</td></tr><tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 12px;">3. <b>41501</b> <span style="color:#64748b;font-size:12px;">HAI Junior | Classic Set</span></td><td style="padding:8px 12px;text-align:center;font-weight:700;">16.0</td><td style="padding:8px 12px;text-align:center;color:#64748b;">泳裝 Junior 線</td></tr><tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 12px;">4. <b>51102</b> <span style="color:#64748b;font-size:12px;">HAI | Mesh One</span></td><td style="padding:8px 12px;text-align:center;font-weight:700;">15.0</td><td style="padding:8px 12px;text-align:center;color:#64748b;">泳裝正線・一件式</td></tr><tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 12px;">5. <b>41101</b> <span style="color:#64748b;font-size:12px;">HAI | Classic One</span></td><td style="padding:8px 12px;text-align:center;font-weight:700;">14.0</td><td style="padding:8px 12px;text-align:center;color:#64748b;">泳裝正線・一件式</td></tr>
-        </table>
+  <div style="background:#ffffff;padding:0 28px 28px;">
+    <div style="border-top:1px solid #e2e8f0;padding-top:20px;">
+      <h3 style="margin:0 0 10px;color:#0f172a;font-size:14px;">🔥 本週熱銷 Top 5</h3>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;">
+        <tr style="background:#f8f9fb;">
+          <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;">品項</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;">銷量</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;">類別</th>
+        </tr>
+        <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 12px;">1. <b>41102</b> <span style="color:#64748b;font-size:12px;">HAI | Scoop One</span></td><td style="padding:8px 12px;text-align:center;font-weight:700;">61.0</td><td style="padding:8px 12px;text-align:center;color:#64748b;">泳裝正線・一件式</td></tr><tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 12px;">2. <b>41207</b> <span style="color:#64748b;font-size:12px;">HAI | Classic Bikini</span></td><td style="padding:8px 12px;text-align:center;font-weight:700;">17.5</td><td style="padding:8px 12px;text-align:center;color:#64748b;">泳裝正線・兩件式</td></tr><tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 12px;">3. <b>41501</b> <span style="color:#64748b;font-size:12px;">HAI Junior | Classic Set</span></td><td style="padding:8px 12px;text-align:center;font-weight:700;">16.0</td><td style="padding:8px 12px;text-align:center;color:#64748b;">泳裝 Junior 線</td></tr><tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 12px;">4. <b>51102</b> <span style="color:#64748b;font-size:12px;">HAI | Mesh One</span></td><td style="padding:8px 12px;text-align:center;font-weight:700;">15.0</td><td style="padding:8px 12px;text-align:center;color:#64748b;">泳裝正線・一件式</td></tr><tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 12px;">5. <b>41101</b> <span style="color:#64748b;font-size:12px;">HAI | Classic One</span></td><td style="padding:8px 12px;text-align:center;font-weight:700;">14.0</td><td style="padding:8px 12px;text-align:center;color:#64748b;">泳裝正線・一件式</td></tr>
+      </table>
 
-        <div style="margin-top:20px;">
-          
+      <div style="margin-top:20px;">
+        
         <h3 style="margin:24px 0 10px;color:#ef4444;font-size:14px;">⚠️ 庫存警示（不足 7 天）</h3>
         <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#fff5f5;border-radius:8px;overflow:hidden;">
           <tr style="background:#fee2e2;">
@@ -782,32 +916,27 @@
           <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 12px;"><b>63404</b> HAI | Sunscreen SPF50</td><td style="padding:8px 12px;text-align:center;">0</td><td style="padding:8px 12px;text-align:center;color:#ef4444;font-weight:700;">0.0 天</td></tr><tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:8px 12px;"><b>63405</b> HAI | After</td><td style="padding:8px 12px;text-align:center;">0</td><td style="padding:8px 12px;text-align:center;color:#ef4444;font-weight:700;">0.0 天</td></tr>
         </table>
         
-        </div>
-
-        <div style="margin-top:20px;padding:14px;background:#f0fdf4;border-radius:8px;border-left:3px solid #22c55e;">
-          <div style="font-size:13px;font-weight:600;color:#166534;margin-bottom:6px;">📊 補充分析說明</div>
-          <ul style="margin:0;padding-left:18px;font-size:12px;color:#166534;line-height:1.8;">
-            <li>正線兩件式以「套」計算（上下身各一算一套）</li>
-            <li>Junior 線以「件」計算（上下身各算一件）</li>
-            <li>「預估可售天數」= 現有庫存 ÷ 日均銷量，供備貨參考</li>
-            <li>庫存低於 7 天者標示紅色警示</li>
-            <li>顏色銷量明細顯示於品項名稱下方</li>
-          </ul>
-        </div>
       </div>
-    </td>
-  </tr>
+
+      <div style="margin-top:20px;padding:14px;background:#f0fdf4;border-radius:8px;border-left:3px solid #22c55e;">
+        <div style="font-size:13px;font-weight:600;color:#166534;margin-bottom:6px;">📊 補充分析說明</div>
+        <ul style="margin:0;padding-left:18px;font-size:12px;color:#166534;line-height:1.8;">
+          <li>正線兩件式以「套」計算（上下身各一算一套）</li>
+          <li>Junior 線以「件」計算（上下身各算一件）</li>
+          <li>「預估可售天數」= 現有庫存 ÷ 日均銷量，供備貨參考</li>
+          <li>庫存低於 7 天者標示紅色警示；∞ 表示本週銷量為 0</li>
+          <li>庫存數量已排除預購倉</li>
+        </ul>
+      </div>
+    </div>
+  </div>
 
   <!-- Footer -->
-  <tr>
-    <td style="background:#f1f5f9;border-radius:0 0 12px 12px;padding:16px 28px;text-align:center;">
-      <div style="color:#94a3b8;font-size:11px;">HAI Swimwear 自動報表系統・每週一 09:00 Taiwan Time 發送</div>
-      <div style="color:#cbd5e1;font-size:11px;margin-top:2px;">報表產生時間：2026-06-29 16:22 TWN</div>
-    </td>
-  </tr>
+  <div style="background:#f1f5f9;border-radius:0 0 12px 12px;padding:16px 28px;text-align:center;">
+    <div style="color:#94a3b8;font-size:11px;">HAI Swimwear 自動報表系統・每週一 09:00 Taiwan Time 發送</div>
+    <div style="color:#cbd5e1;font-size:11px;margin-top:2px;">報表產生時間：2026-06-29 16:42 TWN</div>
+  </div>
 
-</table>
-</td></tr>
-</table>
+</div>
 </body>
 </html>

@@ -186,9 +186,10 @@ query ($ids: [ID!]!) {
   nodes(ids: $ids) {
     ... on InventoryItem {
       id
-      inventoryLevels(first: 10) {
+      inventoryLevels(first: 20) {
         edges {
           node {
+            location { name }
             quantities(names: ["available"]) {
               name
               quantity
@@ -200,6 +201,13 @@ query ($ids: [ID!]!) {
   }
 }
 """
+
+# 預購倉關鍵字（不分大小寫）：含這些字的倉庫不計入庫存
+PREORDER_LOCATION_KEYWORDS = ["預購", "pre-order", "preorder", "pre order"]
+
+def is_preorder_location(name: str) -> bool:
+    n = name.lower()
+    return any(kw in n for kw in PREORDER_LOCATION_KEYWORDS)
 
 def fetch_orders(date_from: datetime, date_to: datetime) -> list[dict]:
     """抓取指定日期區間所有已付款訂單（含退款單，後續扣除）"""
@@ -217,7 +225,7 @@ def fetch_orders(date_from: datetime, date_to: datetime) -> list[dict]:
     return orders
 
 def fetch_inventory_batch(inv_item_ids: list[str]) -> dict[str, int]:
-    """一批取得庫存，回傳 {inventoryItemId: available_qty}"""
+    """一批取得庫存，回傳 {inventoryItemId: available_qty}（排除預購倉）"""
     result = {}
     batch_size = 50
     for i in range(0, len(inv_item_ids), batch_size):
@@ -228,6 +236,9 @@ def fetch_inventory_batch(inv_item_ids: list[str]) -> dict[str, int]:
                 continue
             total = 0
             for le in node.get("inventoryLevels", {}).get("edges", []):
+                loc_name = le["node"].get("location", {}).get("name", "")
+                if is_preorder_location(loc_name):
+                    continue  # 跳過預購倉
                 for q in le["node"].get("quantities", []):
                     if q["name"] == "available":
                         total += q["quantity"]
@@ -391,9 +402,30 @@ def compute_stats(orders: list[dict], inventory: dict[str, int]):
         for cat, pc_dict in item_totals.items()
     }
 
-    return category_totals, item_totals, color_totals, week_days
+    # ── sku_details: {product_code: set of sizes} — from parsed SKUs seen in orders ──
+    sku_details: dict[str, set] = defaultdict(set)
+    for order in orders:
+        if order.get("displayFinancialStatus") in ("REFUNDED", "VOIDED"):
+            continue
+        for edge in order["lineItems"]["edges"]:
+            li = edge["node"]
+            parsed = parse_sku(li.get("sku") or "")
+            if parsed and parsed["size"]:
+                sku_details[parsed["product_code"]].add(parsed["size"])
+
+    return category_totals, item_totals, color_totals, week_days, sku_details
 
 # ─── HTML 報表生成 ────────────────────────────────────────────────────────────
+
+def collect_sizes_colors(color_totals: dict, item_totals: dict) -> tuple[list, list]:
+    """收集報表中所有出現的尺寸和顏色，供篩選器使用"""
+    all_colors: set[str] = set()
+    # 從 color_totals 取顏色（已含顏色代碼）
+    for cat_dict in color_totals.values():
+        for col_dict in cat_dict.values():
+            all_colors.update(col_dict.keys())
+    return sorted(all_colors)
+
 
 def render_html(
     week_label: str,
@@ -401,8 +433,8 @@ def render_html(
     item_totals: dict,
     color_totals: dict,
     week_days: int,
+    sku_details: dict = None,  # {product_code: set of sizes} for filter
 ) -> str:
-    ACCENT = "#6366f1"
     CAT_COLORS = {
         "regular_one_piece": "#0ea5e9",
         "regular_two_piece": "#8b5cf6",
@@ -411,30 +443,12 @@ def render_html(
         "accessory":         "#94a3b8",
     }
 
+    # 收集所有顏色供篩選器
+    all_colors = collect_sizes_colors(color_totals, item_totals)
+
     def badge(text, color="#6366f1", bg=None):
         bg = bg or color + "1a"
         return f'<span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;color:{color};background:{bg};">{text}</span>'
-
-    def section_header(cat):
-        color = CAT_COLORS.get(cat, "#6366f1")
-        return f"""
-        <tr>
-          <td colspan="5" style="padding:20px 0 6px;">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div style="width:4px;height:20px;background:{color};border-radius:2px;"></div>
-              <span style="font-size:15px;font-weight:700;color:#0f172a;">{CATEGORY_NAMES.get(cat, cat)}</span>
-              {badge(f'本週 {category_totals.get(cat, 0):.1f} {"套" if cat == "regular_two_piece" else "件"}', color)}
-            </div>
-          </td>
-        </tr>
-        <tr style="background:#f1f5f9;">
-          <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;font-weight:600;">品項</th>
-          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">週銷量</th>
-          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">日均銷量</th>
-          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">現有庫存</th>
-          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">預估可售天數</th>
-        </tr>
-        """
 
     def inventory_bar(days_left):
         if days_left == "∞":
@@ -450,24 +464,52 @@ def render_html(
         unit = "套" if cat == "regular_two_piece" else "件"
         sorted_cols = sorted(col_data.items(), key=lambda x: -x[1])
         chips = " ".join(
-            f'<span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">'
+            f'<span class="color-chip" style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569;">'
             f'{col} {v:.1f}{unit}</span>'
             for col, v in sorted_cols
         )
         return f'<div style="margin-top:4px;">{chips}</div>'
 
-    rows_html = ""
+    # ── 建立所有品項行（含 data 屬性供 JS 篩選）
+    all_rows_html = ""
     for cat in CATEGORY_ORDER:
         pc_dict = item_totals.get(cat)
         if not pc_dict:
             continue
-        rows_html += section_header(cat)
         unit = "套" if cat == "regular_two_piece" else "件"
-        sorted_items = sorted(pc_dict.items(), key=lambda x: x[1]["count"])
+        cat_label = CATEGORY_NAMES.get(cat, cat)
+        cat_color = CAT_COLORS.get(cat, "#6366f1")
+        cat_total = category_totals.get(cat, 0)
+
+        # 分類標題行
+        all_rows_html += f"""
+        <tr class="cat-header" data-cat="{cat}">
+          <td colspan="5" style="padding:20px 0 6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:4px;height:20px;background:{cat_color};border-radius:2px;"></div>
+              <span style="font-size:15px;font-weight:700;color:#0f172a;">{cat_label}</span>
+              <span class="cat-badge" data-cat="{cat}" style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;color:{cat_color};background:{cat_color}1a;">本週 {cat_total:.1f} {unit}</span>
+            </div>
+          </td>
+        </tr>
+        <tr class="cat-header" data-cat="{cat}" style="background:#f1f5f9;">
+          <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;font-weight:600;">品項</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">週銷量</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">日均銷量</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">現有庫存</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;font-weight:600;">預估可售天數</th>
+        </tr>
+        """
+
+        sorted_items = sorted(pc_dict.items(), key=lambda x: -x[1]["count"])
         for i, (pc, d) in enumerate(sorted_items):
             bg = "#ffffff" if i % 2 == 0 else "#fafafa"
-            rows_html += f"""
-            <tr style="background:{bg};border-bottom:1px solid #f1f5f9;">
+            col_data = color_totals.get(cat, {}).get(pc, {})
+            colors_str = " ".join(col_data.keys())
+            sizes_str = " ".join((sku_details or {}).get(pc, set()))
+            all_rows_html += f"""
+            <tr class="item-row" data-cat="{cat}" data-pc="{pc}" data-colors="{colors_str}" data-sizes="{sizes_str}"
+                style="background:{bg};border-bottom:1px solid #f1f5f9;">
               <td style="padding:10px 12px;">
                 <div style="font-weight:600;color:#0f172a;">{pc}</div>
                 <div style="font-size:12px;color:#64748b;">{d['name']}</div>
@@ -480,14 +522,14 @@ def render_html(
             </tr>
             """
 
-    # 額外分析：熱銷排行、庫存警示
+    # 額外分析：熱銷排行、庫存警示（只算有銷量品項）
     all_items = []
     for cat, pd in item_totals.items():
         for pc, d in pd.items():
             all_items.append({**d, "pc": pc, "cat": cat})
 
-    top5 = sorted(all_items, key=lambda x: -x["count"])[:5]
-    low_stock = [x for x in all_items if isinstance(x["days_left"], float) and x["days_left"] < 7]
+    top5 = sorted([x for x in all_items if x["count"] > 0], key=lambda x: -x["count"])[:5]
+    low_stock = [x for x in all_items if x["count"] > 0 and isinstance(x["days_left"], float) and x["days_left"] < 7]
 
     top5_rows = "".join(
         f'<tr style="border-bottom:1px solid #f1f5f9;">'
@@ -496,7 +538,7 @@ def render_html(
         f'<td style="padding:8px 12px;text-align:center;color:#64748b;">{CATEGORY_NAMES.get(x["cat"],"")}</td>'
         f'</tr>'
         for i, x in enumerate(top5)
-    )
+    ) if top5 else '<tr><td colspan="3" style="padding:12px;color:#94a3b8;text-align:center;">本週尚無銷量資料</td></tr>'
 
     if low_stock:
         low_rows = "".join(
@@ -523,98 +565,188 @@ def render_html(
 
     total_orders_sold = sum(v for v in category_totals.values())
 
+    # 篩選器選項
+    color_options = "".join(f'<option value="{c}">{c}</option>' for c in all_colors)
+    size_options = "".join(
+        f'<option value="{s}">{s}</option>'
+        for s in ["XS", "S", "M", "L", "XL", "XXL", "F"]
+    )
+    cat_options = "".join(
+        f'<option value="{k}">{v}</option>'
+        for k, v in CATEGORY_NAMES.items()
+    )
+
+    filter_js = """
+<script>
+function applyFilters() {
+  var cat   = document.getElementById('f-cat').value;
+  var color = document.getElementById('f-color').value.toUpperCase().trim();
+  var size  = document.getElementById('f-size').value;
+  var pc    = document.getElementById('f-pc').value.toUpperCase().trim();
+
+  // 先顯示所有行
+  document.querySelectorAll('.item-row').forEach(function(row) {
+    var rCat    = row.dataset.cat;
+    var rPc     = row.dataset.pc;
+    var rColors = (row.dataset.colors || '').toUpperCase();
+    var rSizes  = (row.dataset.sizes  || '').toUpperCase();
+
+    var show = true;
+    if (cat   && rCat !== cat) show = false;
+    if (color && rColors.indexOf(color) === -1) show = false;
+    if (size  && rSizes.indexOf(size)   === -1) show = false;
+    if (pc    && rPc.indexOf(pc)        === -1) show = false;
+    row.style.display = show ? '' : 'none';
+  });
+
+  // 分類標題：若該分類下沒有任何可見 item-row 就隱藏
+  document.querySelectorAll('.cat-header').forEach(function(header) {
+    var hCat = header.dataset.cat;
+    if (cat && hCat !== cat) { header.style.display = 'none'; return; }
+    var hasVisible = Array.from(
+      document.querySelectorAll('.item-row[data-cat="' + hCat + '"]')
+    ).some(function(r){ return r.style.display !== 'none'; });
+    header.style.display = hasVisible ? '' : 'none';
+  });
+
+  // 無結果提示
+  var noRes = document.getElementById('no-results');
+  var anyVisible = Array.from(document.querySelectorAll('.item-row'))
+    .some(function(r){ return r.style.display !== 'none'; });
+  noRes.style.display = anyVisible ? 'none' : '';
+}
+
+function clearFilters() {
+  ['f-cat','f-color','f-size','f-pc'].forEach(function(id){
+    document.getElementById(id).value = '';
+  });
+  applyFilters();
+}
+</script>
+"""
+
     html = f"""<!DOCTYPE html>
 <html lang="zh-TW">
-<head><meta charset="UTF-8"><title>HAI Swimwear 週銷量報表</title></head>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HAI Swimwear 週銷量報表</title>
+{filter_js}
+</head>
 <body style="margin:0;padding:0;background:#f8f9fb;font-family:'Helvetica Neue',Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9fb;">
-<tr><td align="center" style="padding:24px 16px;">
-<table width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;">
+<div style="max-width:760px;margin:0 auto;padding:24px 16px;">
 
   <!-- Header -->
-  <tr>
-    <td style="background:#0f172a;border-radius:12px 12px 0 0;padding:24px 28px;">
-      <div style="color:#f8fafc;font-size:22px;font-weight:800;letter-spacing:-0.5px;">HAI Swimwear</div>
-      <div style="color:#94a3b8;font-size:13px;margin-top:4px;">週銷量報表・{week_label}</div>
-    </td>
-  </tr>
+  <div style="background:#0f172a;border-radius:12px 12px 0 0;padding:24px 28px;">
+    <div style="color:#f8fafc;font-size:22px;font-weight:800;letter-spacing:-0.5px;">HAI Swimwear</div>
+    <div style="color:#94a3b8;font-size:13px;margin-top:4px;">週銷量報表・{week_label}</div>
+  </div>
 
   <!-- Summary Cards -->
-  <tr>
-    <td style="background:#1e293b;padding:16px 28px 20px;">
-      <table width="100%" cellpadding="0" cellspacing="0">
-        <tr>
-          <td style="width:50%;padding-right:8px;">
-            <div style="background:#334155;border-radius:8px;padding:14px;">
-              <div style="color:#94a3b8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">本週總銷量</div>
-              <div style="color:#f8fafc;font-size:28px;font-weight:800;margin-top:4px;">{total_orders_sold:.1f}</div>
-              <div style="color:#64748b;font-size:12px;">件 / 套</div>
-            </div>
-          </td>
-          <td style="width:50%;padding-left:8px;">
-            <div style="background:#334155;border-radius:8px;padding:14px;">
-              <div style="color:#94a3b8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">日均銷量</div>
-              <div style="color:#f8fafc;font-size:28px;font-weight:800;margin-top:4px;">{total_orders_sold/week_days:.1f}</div>
-              <div style="color:#64748b;font-size:12px;">件·套 / 天（共 {week_days} 天）</div>
-            </div>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
+  <div style="background:#1e293b;padding:16px 28px 20px;">
+    <div style="display:flex;gap:12px;">
+      <div style="flex:1;background:#334155;border-radius:8px;padding:14px;">
+        <div style="color:#94a3b8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">本週總銷量</div>
+        <div style="color:#f8fafc;font-size:28px;font-weight:800;margin-top:4px;">{total_orders_sold:.1f}</div>
+        <div style="color:#64748b;font-size:12px;">件 / 套</div>
+      </div>
+      <div style="flex:1;background:#334155;border-radius:8px;padding:14px;">
+        <div style="color:#94a3b8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">日均銷量</div>
+        <div style="color:#f8fafc;font-size:28px;font-weight:800;margin-top:4px;">{total_orders_sold/week_days:.1f}</div>
+        <div style="color:#64748b;font-size:12px;">件·套 / 天（共 {week_days} 天）</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 篩選器 -->
+  <div style="background:#ffffff;border-top:1px solid #e2e8f0;padding:16px 28px;">
+    <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:10px;">🔍 篩選</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+      <div>
+        <div style="font-size:11px;color:#64748b;margin-bottom:4px;">分類</div>
+        <select id="f-cat" onchange="applyFilters()"
+          style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;color:#0f172a;background:#f8f9fb;min-width:140px;">
+          <option value="">全部分類</option>
+          {cat_options}
+        </select>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#64748b;margin-bottom:4px;">型號</div>
+        <input id="f-pc" oninput="applyFilters()" placeholder="例: 41102"
+          style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;color:#0f172a;background:#f8f9fb;width:100px;">
+      </div>
+      <div>
+        <div style="font-size:11px;color:#64748b;margin-bottom:4px;">顏色代碼</div>
+        <select id="f-color" onchange="applyFilters()"
+          style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;color:#0f172a;background:#f8f9fb;min-width:100px;">
+          <option value="">全部顏色</option>
+          {color_options}
+        </select>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#64748b;margin-bottom:4px;">尺寸</div>
+        <select id="f-size" onchange="applyFilters()"
+          style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;color:#0f172a;background:#f8f9fb;min-width:80px;">
+          <option value="">全部尺寸</option>
+          {size_options}
+        </select>
+      </div>
+      <button onclick="clearFilters()"
+        style="padding:7px 16px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;color:#475569;cursor:pointer;">
+        清除篩選
+      </button>
+    </div>
+  </div>
 
   <!-- Main Table -->
-  <tr>
-    <td style="background:#ffffff;padding:16px 28px 24px;border-radius:0 0 0 0;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-        {rows_html}
-      </table>
-    </td>
-  </tr>
+  <div style="background:#ffffff;padding:0 28px 24px;">
+    <table id="main-table" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+      {all_rows_html}
+      <tr id="no-results" style="display:none;">
+        <td colspan="5" style="padding:32px;text-align:center;color:#94a3b8;font-size:14px;">
+          找不到符合篩選條件的品項
+        </td>
+      </tr>
+    </table>
+  </div>
 
   <!-- Additional Analysis -->
-  <tr>
-    <td style="background:#ffffff;padding:0 28px 28px;">
-      <div style="border-top:1px solid #e2e8f0;padding-top:20px;">
-        <h3 style="margin:0 0 10px;color:#0f172a;font-size:14px;">🔥 本週熱銷 Top 5</h3>
-        <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;">
-          <tr style="background:#f8f9fb;">
-            <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;">品項</th>
-            <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;">銷量</th>
-            <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;">類別</th>
-          </tr>
-          {top5_rows}
-        </table>
+  <div style="background:#ffffff;padding:0 28px 28px;">
+    <div style="border-top:1px solid #e2e8f0;padding-top:20px;">
+      <h3 style="margin:0 0 10px;color:#0f172a;font-size:14px;">🔥 本週熱銷 Top 5</h3>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;">
+        <tr style="background:#f8f9fb;">
+          <th style="padding:8px 12px;text-align:left;font-size:12px;color:#64748b;">品項</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;">銷量</th>
+          <th style="padding:8px 12px;text-align:center;font-size:12px;color:#64748b;">類別</th>
+        </tr>
+        {top5_rows}
+      </table>
 
-        <div style="margin-top:20px;">
-          {low_section}
-        </div>
-
-        <div style="margin-top:20px;padding:14px;background:#f0fdf4;border-radius:8px;border-left:3px solid #22c55e;">
-          <div style="font-size:13px;font-weight:600;color:#166534;margin-bottom:6px;">📊 補充分析說明</div>
-          <ul style="margin:0;padding-left:18px;font-size:12px;color:#166534;line-height:1.8;">
-            <li>正線兩件式以「套」計算（上下身各一算一套）</li>
-            <li>Junior 線以「件」計算（上下身各算一件）</li>
-            <li>「預估可售天數」= 現有庫存 ÷ 日均銷量，供備貨參考</li>
-            <li>庫存低於 7 天者標示紅色警示</li>
-            <li>顏色銷量明細顯示於品項名稱下方</li>
-          </ul>
-        </div>
+      <div style="margin-top:20px;">
+        {low_section}
       </div>
-    </td>
-  </tr>
+
+      <div style="margin-top:20px;padding:14px;background:#f0fdf4;border-radius:8px;border-left:3px solid #22c55e;">
+        <div style="font-size:13px;font-weight:600;color:#166534;margin-bottom:6px;">📊 補充分析說明</div>
+        <ul style="margin:0;padding-left:18px;font-size:12px;color:#166534;line-height:1.8;">
+          <li>正線兩件式以「套」計算（上下身各一算一套）</li>
+          <li>Junior 線以「件」計算（上下身各算一件）</li>
+          <li>「預估可售天數」= 現有庫存 ÷ 日均銷量，供備貨參考</li>
+          <li>庫存低於 7 天者標示紅色警示；∞ 表示本週銷量為 0</li>
+          <li>庫存數量已排除預購倉</li>
+        </ul>
+      </div>
+    </div>
+  </div>
 
   <!-- Footer -->
-  <tr>
-    <td style="background:#f1f5f9;border-radius:0 0 12px 12px;padding:16px 28px;text-align:center;">
-      <div style="color:#94a3b8;font-size:11px;">HAI Swimwear 自動報表系統・每週一 09:00 Taiwan Time 發送</div>
-      <div style="color:#cbd5e1;font-size:11px;margin-top:2px;">報表產生時間：{datetime.now(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M')} TWN</div>
-    </td>
-  </tr>
+  <div style="background:#f1f5f9;border-radius:0 0 12px 12px;padding:16px 28px;text-align:center;">
+    <div style="color:#94a3b8;font-size:11px;">HAI Swimwear 自動報表系統・每週一 09:00 Taiwan Time 發送</div>
+    <div style="color:#cbd5e1;font-size:11px;margin-top:2px;">報表產生時間：{datetime.now(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M')} TWN</div>
+  </div>
 
-</table>
-</td></tr>
-</table>
+</div>
 </body>
 </html>"""
     return html
@@ -684,7 +816,7 @@ def main():
     print(f"   → 共取得 {len(product_catalog)} 個商品代碼")
 
     print("📊 計算銷售統計...")
-    category_totals, item_totals, color_totals, week_days = compute_stats(orders, inventory)
+    category_totals, item_totals, color_totals, week_days, sku_details = compute_stats(orders, inventory)
 
     # 將目錄中的品項合入 item_totals（4/5/6 開頭，銷量=0 也要顯示）
     for pc, cat_info in product_catalog.items():
@@ -705,7 +837,7 @@ def main():
     }
 
     print("🎨 生成 HTML 報表...")
-    html = render_html(week_label, category_totals, item_totals, color_totals, week_days)
+    html = render_html(week_label, category_totals, item_totals, color_totals, week_days, sku_details)
 
     # 儲存本地備份
     out_path = os.path.join(os.path.dirname(__file__), "index.html")
