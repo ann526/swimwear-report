@@ -203,7 +203,7 @@ query ($ids: [ID!]!) {
 """
 
 # 預購倉關鍵字（不分大小寫）：含這些字的倉庫不計入庫存
-PREORDER_LOCATION_KEYWORDS = ["預購", "pre-order", "preorder", "pre order"]
+PREORDER_LOCATION_KEYWORDS = ["預購倉", "pre-order", "preorder", "pre order"]
 
 def is_preorder_location(name: str) -> bool:
     n = name.lower()
@@ -308,6 +308,8 @@ def compute_stats(orders: list[dict], inventory: dict[str, int]):
     raw_color = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {
         "T": 0, "B": 0, "solo": 0
     })))
+    # size 統計 {category: {product_code: {size: count}}}
+    raw_size: dict = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
 
     inv_item_map: dict[str, str] = {}  # inventoryItemId → sku
 
@@ -348,6 +350,10 @@ def compute_stats(orders: list[dict], inventory: dict[str, int]):
             else:
                 raw[cat][pc]["solo"] += qty
                 raw_color[cat][pc][col]["solo"] += qty
+
+            # 尺寸統計（直接加件數，不換算套數）
+            sz = parsed["size"] or "?"
+            raw_size[cat][pc][sz] += qty
 
     week_days = 7
 
@@ -402,18 +408,16 @@ def compute_stats(orders: list[dict], inventory: dict[str, int]):
         for cat, pc_dict in item_totals.items()
     }
 
-    # ── sku_details: {product_code: set of sizes} — from parsed SKUs seen in orders ──
-    sku_details: dict[str, set] = defaultdict(set)
-    for order in orders:
-        if order.get("displayFinancialStatus") in ("REFUNDED", "VOIDED"):
-            continue
-        for edge in order["lineItems"]["edges"]:
-            li = edge["node"]
-            parsed = parse_sku(li.get("sku") or "")
-            if parsed and parsed["size"]:
-                sku_details[parsed["product_code"]].add(parsed["size"])
+    # ── size_totals: {category: {product_code: {size: qty}}} ──
+    size_totals: dict = {cat: dict(pc_dict) for cat, pc_dict in raw_size.items()}
 
-    return category_totals, item_totals, color_totals, week_days, sku_details
+    # ── sku_details: {product_code: set of sizes} ──
+    sku_details: dict[str, set] = defaultdict(set)
+    for cat_dict in raw_size.values():
+        for pc, sz_dict in cat_dict.items():
+            sku_details[pc].update(sz_dict.keys())
+
+    return category_totals, item_totals, color_totals, size_totals, week_days, sku_details
 
 # ─── HTML 報表生成 ────────────────────────────────────────────────────────────
 
@@ -432,6 +436,7 @@ def render_html(
     category_totals: dict,
     item_totals: dict,
     color_totals: dict,
+    size_totals: dict,
     week_days: int,
     sku_details: dict = None,  # {product_code: set of sizes} for filter
 ) -> str:
@@ -457,6 +462,8 @@ def render_html(
         color = "#22c55e" if days > 14 else ("#f59e0b" if days > 7 else "#ef4444")
         return f'<span style="color:{color};font-weight:700;">{days} 天</span>'
 
+    SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "F", "?"]
+
     def color_breakdown(cat, pc):
         col_data = color_totals.get(cat, {}).get(pc, {})
         if not col_data:
@@ -468,7 +475,19 @@ def render_html(
             f'{col} {v:.1f}{unit}</span>'
             for col, v in sorted_cols
         )
-        return f'<div style="margin-top:4px;">{chips}</div>'
+        return f'<div style="margin-top:3px;"><span style="font-size:10px;color:#94a3b8;font-weight:600;margin-right:4px;">顏色</span>{chips}</div>'
+
+    def size_breakdown(cat, pc):
+        sz_data = size_totals.get(cat, {}).get(pc, {})
+        if not sz_data:
+            return ""
+        sorted_sizes = sorted(sz_data.items(), key=lambda x: (SIZE_ORDER.index(x[0]) if x[0] in SIZE_ORDER else 99))
+        chips = " ".join(
+            f'<span style="display:inline-block;margin:2px;padding:2px 8px;border-radius:12px;font-size:11px;background:#eff6ff;color:#2563eb;">'
+            f'{sz} {qty}件</span>'
+            for sz, qty in sorted_sizes
+        )
+        return f'<div style="margin-top:3px;"><span style="font-size:10px;color:#94a3b8;font-weight:600;margin-right:4px;">尺寸</span>{chips}</div>'
 
     # ── 建立所有品項行（含 data 屬性供 JS 篩選）
     all_rows_html = ""
@@ -514,6 +533,7 @@ def render_html(
                 <div style="font-weight:600;color:#0f172a;">{pc}</div>
                 <div style="font-size:12px;color:#64748b;">{d['name']}</div>
                 {color_breakdown(cat, pc)}
+                {size_breakdown(cat, pc)}
               </td>
               <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:700;color:#0f172a;">{d['count']:.1f} {unit}</td>
               <td style="padding:10px 12px;text-align:center;color:#475569;">{d['daily_avg']} {unit}/天</td>
@@ -816,7 +836,7 @@ def main():
     print(f"   → 共取得 {len(product_catalog)} 個商品代碼")
 
     print("📊 計算銷售統計...")
-    category_totals, item_totals, color_totals, week_days, sku_details = compute_stats(orders, inventory)
+    category_totals, item_totals, color_totals, size_totals, week_days, sku_details = compute_stats(orders, inventory)
 
     # 將目錄中的品項合入 item_totals（4/5/6 開頭，銷量=0 也要顯示）
     for pc, cat_info in product_catalog.items():
@@ -837,7 +857,7 @@ def main():
     }
 
     print("🎨 生成 HTML 報表...")
-    html = render_html(week_label, category_totals, item_totals, color_totals, week_days, sku_details)
+    html = render_html(week_label, category_totals, item_totals, color_totals, size_totals, week_days, sku_details)
 
     # 儲存本地備份
     out_path = os.path.join(os.path.dirname(__file__), "index.html")
