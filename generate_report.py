@@ -785,6 +785,103 @@ def send_email(subject: str, html_body: str):
         server.sendmail(GMAIL_USER, REPORT_RECIPIENT, msg.as_string())
     print(f"✅ 報表已寄出至 {REPORT_RECIPIENT}")
 
+# ─── 多週導航 ─────────────────────────────────────────────────────────────────
+
+def get_weekly_reports_index(base_dir: str) -> list[dict]:
+    """
+    掃描 reports/ 目錄，回傳所有週報表清單（由新到舊）
+    格式: [{"date": "2026-06-22", "label": "2026/06/22（一）~ 2026/06/28（日）", "file": "reports/2026-06-22.html"}]
+    """
+    reports_dir = os.path.join(base_dir, "reports")
+    if not os.path.isdir(reports_dir):
+        return []
+    entries = []
+    for fn in os.listdir(reports_dir):
+        m = re.match(r"^(\d{4}-\d{2}-\d{2})\.html$", fn)
+        if not m:
+            continue
+        date_str = m.group(1)
+        try:
+            monday = datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            continue
+        sunday = monday + timedelta(days=6)
+        weekdays = ["一", "二", "三", "四", "五", "六", "日"]
+        label = f"{monday.strftime('%Y/%m/%d')}（{weekdays[monday.weekday()]}）~ {sunday.strftime('%Y/%m/%d')}（{weekdays[sunday.weekday()]}）"
+        entries.append({
+            "date":  date_str,
+            "label": label,
+            "file":  f"reports/{fn}",
+        })
+    entries.sort(key=lambda x: x["date"], reverse=True)
+    return entries
+
+
+def render_index_html(reports: list[dict]) -> str:
+    """產生多週導航頁面 index.html"""
+    tz_tw = timezone(timedelta(hours=8))
+    now_str = datetime.now(tz_tw).strftime("%Y-%m-%d %H:%M")
+
+    if reports:
+        latest = reports[0]
+        latest_link = f'<a href="{latest["file"]}" style="color:#0ea5e9;text-decoration:none;font-weight:700;">→ 查看最新報表：{latest["label"]}</a>'
+    else:
+        latest_link = '<span style="color:#94a3b8;">尚無報表</span>'
+
+    rows = ""
+    for i, r in enumerate(reports):
+        bg = "#ffffff" if i % 2 == 0 else "#f8f9fb"
+        tag = ' <span style="font-size:10px;padding:2px 8px;background:#0ea5e9;color:#fff;border-radius:20px;font-weight:600;">最新</span>' if i == 0 else ""
+        rows += f"""
+        <tr style="background:{bg};border-bottom:1px solid #f1f5f9;">
+          <td style="padding:12px 16px;font-size:13px;color:#0f172a;">{r["label"]}{tag}</td>
+          <td style="padding:12px 16px;text-align:right;">
+            <a href="{r["file"]}" style="color:#0ea5e9;font-size:13px;text-decoration:none;font-weight:600;">查看報表 →</a>
+          </td>
+        </tr>"""
+
+    if not rows:
+        rows = '<tr><td colspan="2" style="padding:24px;text-align:center;color:#94a3b8;">尚無歷史報表</td></tr>'
+
+    return f"""<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HAI Swimwear 週銷量報表・歷史紀錄</title>
+</head>
+<body style="margin:0;padding:0;background:#f8f9fb;font-family:'Helvetica Neue',Arial,sans-serif;">
+<div style="max-width:680px;margin:0 auto;padding:24px 16px;">
+
+  <div style="background:#0f172a;border-radius:12px 12px 0 0;padding:24px 28px;">
+    <div style="color:#f8fafc;font-size:22px;font-weight:800;letter-spacing:-0.5px;">HAI Swimwear</div>
+    <div style="color:#94a3b8;font-size:13px;margin-top:4px;">週銷量報表・歷史紀錄</div>
+  </div>
+
+  <div style="background:#1e293b;padding:16px 28px;">
+    <div style="color:#cbd5e1;font-size:13px;">{latest_link}</div>
+  </div>
+
+  <div style="background:#ffffff;padding:0 0 8px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+      <tr style="background:#f1f5f9;">
+        <th style="padding:10px 16px;text-align:left;font-size:12px;color:#64748b;font-weight:600;">週次</th>
+        <th style="padding:10px 16px;text-align:right;font-size:12px;color:#64748b;font-weight:600;"></th>
+      </tr>
+      {rows}
+    </table>
+  </div>
+
+  <div style="background:#f1f5f9;border-radius:0 0 12px 12px;padding:14px 28px;text-align:center;">
+    <div style="color:#94a3b8;font-size:11px;">HAI Swimwear 自動報表系統・每週一 09:00 Taiwan Time 發送</div>
+    <div style="color:#cbd5e1;font-size:11px;margin-top:2px;">更新時間：{now_str} TWN</div>
+  </div>
+
+</div>
+</body>
+</html>"""
+
+
 # ─── 主程式 ───────────────────────────────────────────────────────────────────
 
 def get_week_range(ref_date: datetime = None):
@@ -803,7 +900,8 @@ def get_week_range(ref_date: datetime = None):
     last_monday_utc = last_monday.astimezone(timezone.utc)
     last_sunday_utc = last_sunday.astimezone(timezone.utc)
     week_label = f"{last_monday.strftime('%Y/%m/%d')}（一）~ {last_sunday.strftime('%Y/%m/%d')}（日）"
-    return last_monday_utc, last_sunday_utc, week_label
+    monday_date_str = last_monday.strftime("%Y-%m-%d")
+    return last_monday_utc, last_sunday_utc, week_label, monday_date_str
 
 def main():
     if not SHOPIFY_STORE or not SHOPIFY_TOKEN:
@@ -813,7 +911,7 @@ def main():
         print("❌ 請設定 GMAIL_APP_PASSWORD 環境變數")
         sys.exit(1)
 
-    date_from, date_to, week_label = get_week_range()
+    date_from, date_to, week_label, monday_date_str = get_week_range()
     print(f"📅 抓取訂單區間：{week_label}")
 
     print("🔄 正在從 Shopify 抓取訂單...")
@@ -859,11 +957,23 @@ def main():
     print("🎨 生成 HTML 報表...")
     html = render_html(week_label, category_totals, item_totals, color_totals, size_totals, week_days, sku_details)
 
-    # 儲存本地備份
-    out_path = os.path.join(os.path.dirname(__file__), "index.html")
-    with open(out_path, "w", encoding="utf-8") as f:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # 儲存週報表至 reports/YYYY-MM-DD.html
+    reports_dir = os.path.join(base_dir, "reports")
+    os.makedirs(reports_dir, exist_ok=True)
+    week_report_path = os.path.join(reports_dir, f"{monday_date_str}.html")
+    with open(week_report_path, "w", encoding="utf-8") as f:
         f.write(html)
-    print(f"💾 報表已存至 {out_path}")
+    print(f"💾 週報表已存至 {week_report_path}")
+
+    # 更新導航 index.html
+    reports_list = get_weekly_reports_index(base_dir)
+    index_html = render_index_html(reports_list)
+    index_path = os.path.join(base_dir, "index.html")
+    with open(index_path, "w", encoding="utf-8") as f:
+        f.write(index_html)
+    print(f"💾 導航頁面已更新至 {index_path}")
 
     subject = f"HAI Swimwear 週銷量報表・{week_label}"
     print(f"📧 寄送報表至 {REPORT_RECIPIENT}...")
