@@ -23,6 +23,9 @@ SHOPIFY_TOKEN    = os.environ.get("SHOPIFY_ACCESS_TOKEN", "")
 GMAIL_USER       = os.environ.get("GMAIL_USER", "ann@hai-swimwear.com")
 GMAIL_APP_PASS   = os.environ.get("GMAIL_APP_PASSWORD", "")
 REPORT_RECIPIENT = os.environ.get("REPORT_RECIPIENT", "ann@hai-swimwear.com")
+AIRTABLE_TOKEN   = os.environ.get("AIRTABLE_TOKEN", "")
+AIRTABLE_BASE_ID = os.environ.get("AIRTABLE_BASE_ID", "appryOSSxIJuBEs0w")
+AIRTABLE_TABLE_ID = os.environ.get("AIRTABLE_TABLE_ID", "tblLqxS3FAQGmtaDj")
 
 TWO_PIECE_LINES  = {"regular_two_piece"}  # 正線兩件式：T+B 算一套
 JUNIOR_LINES     = {"junior"}             # Junior：每件分開算
@@ -882,6 +885,84 @@ def render_index_html(reports: list[dict]) -> str:
 </html>"""
 
 
+# ─── Airtable 同步 ────────────────────────────────────────────────────────────
+
+def airtable_request(method: str, path: str, payload: dict = None) -> dict:
+    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_ID}{path}"
+    data = json.dumps(payload).encode() if payload else None
+    req = urllib.request.Request(
+        url, data=data,
+        headers={"Authorization": f"Bearer {AIRTABLE_TOKEN}", "Content-Type": "application/json"},
+        method=method,
+    )
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return json.loads(resp.read())
+
+SIZE_ORDER_LIST = ["XS", "S", "M", "L", "XL", "XXL", "F", "?"]
+
+def sync_to_airtable(
+    monday_date_str: str,
+    item_totals: dict,
+    color_totals: dict,
+    size_totals: dict,
+):
+    """將當週銷售資料寫入 Airtable（先刪除同週舊資料再寫入）"""
+    if not AIRTABLE_TOKEN:
+        print("⚠️  未設定 AIRTABLE_TOKEN，跳過 Airtable 同步")
+        return
+
+    # 刪除同週舊資料
+    try:
+        existing = airtable_request("GET", f"?filterByFormula={{週次}}='{monday_date_str}'")
+        old_ids = [r["id"] for r in existing.get("records", [])]
+        for i in range(0, len(old_ids), 10):
+            batch = old_ids[i:i+10]
+            params = "&".join(f"records[]={rid}" for rid in batch)
+            airtable_request("DELETE", f"?{params}")
+    except Exception as e:
+        print(f"⚠️  刪除舊資料失敗（可忽略）: {e}")
+
+    # 建立新紀錄
+    records = []
+    for cat in CATEGORY_ORDER:
+        pc_dict = item_totals.get(cat, {})
+        unit = "套" if cat == "regular_two_piece" else "件"
+        for pc, d in pc_dict.items():
+            if d["count"] == 0:
+                continue
+            col_data = color_totals.get(cat, {}).get(pc, {})
+            color_str = ", ".join(
+                f"{c} {v:.0f}{unit}"
+                for c, v in sorted(col_data.items(), key=lambda x: -x[1])
+            )
+            sz_data = size_totals.get(cat, {}).get(pc, {})
+            sorted_sz = sorted(
+                sz_data.items(),
+                key=lambda x: (SIZE_ORDER_LIST.index(x[0]) if x[0] in SIZE_ORDER_LIST else 99)
+            )
+            size_str = ", ".join(f"{sz} {qty}件" for sz, qty in sorted_sz)
+            records.append({"fields": {
+                "產品代碼": pc,
+                "週次": monday_date_str,
+                "產品名稱": d["name"],
+                "分類": CATEGORY_NAMES.get(cat, cat),
+                "顏色": color_str,
+                "尺碼": size_str,
+                "週銷售量": d["count"],
+                "單位": unit,
+                "庫存": d["inventory"],
+                "日均銷量": d["daily_avg"],
+            }})
+
+    # 分批寫入（每次最多 10 筆，Airtable REST limit）
+    created = 0
+    for i in range(0, len(records), 10):
+        batch = records[i:i+10]
+        airtable_request("POST", "", {"records": batch})
+        created += len(batch)
+    print(f"✅ Airtable 已寫入 {created} 筆（週次 {monday_date_str}）")
+
+
 # ─── 主程式 ───────────────────────────────────────────────────────────────────
 
 def get_week_range(ref_date: datetime = None):
@@ -974,6 +1055,9 @@ def main():
     with open(index_path, "w", encoding="utf-8") as f:
         f.write(index_html)
     print(f"💾 導航頁面已更新至 {index_path}")
+
+    print("📋 同步資料至 Airtable...")
+    sync_to_airtable(monday_date_str, item_totals, color_totals, size_totals)
 
     subject = f"HAI Swimwear 週銷量報表・{week_label}"
     print(f"📧 寄送報表至 {REPORT_RECIPIENT}...")

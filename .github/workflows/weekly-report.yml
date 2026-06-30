@@ -27,12 +27,15 @@ jobs:
           GMAIL_USER:           ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD:   ${{ secrets.GMAIL_APP_PASSWORD }}
           REPORT_RECIPIENT:     ${{ secrets.REPORT_RECIPIENT }}
+          AIRTABLE_TOKEN:       ${{ secrets.AIRTABLE_TOKEN }}
+          AIRTABLE_BASE_ID:     ${{ secrets.AIRTABLE_BASE_ID }}
+          AIRTABLE_TABLE_ID:    ${{ secrets.AIRTABLE_TABLE_ID }}
         run: python generate_report.py
 
       - name: Commit updated report page
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html
+          git add index.html reports/
           git diff --cached --quiet || git commit -m "chore: update weekly sales report $(date -u +'%Y-%m-%d')"
           git push
