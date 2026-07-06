@@ -988,9 +988,6 @@ def main():
     if not SHOPIFY_STORE or not SHOPIFY_TOKEN:
         print("❌ 請設定 SHOPIFY_STORE 和 SHOPIFY_ACCESS_TOKEN 環境變數")
         sys.exit(1)
-    if not GMAIL_APP_PASS:
-        print("❌ 請設定 GMAIL_APP_PASSWORD 環境變數")
-        sys.exit(1)
 
     date_from, date_to, week_label, monday_date_str = get_week_range()
     print(f"📅 抓取訂單區間：{week_label}")
@@ -1059,9 +1056,12 @@ def main():
     print("📋 同步資料至 Airtable...")
     sync_to_airtable(monday_date_str, item_totals, color_totals, size_totals)
 
-    subject = f"HAI Swimwear 週銷量報表・{week_label}"
-    print(f"📧 寄送報表至 {REPORT_RECIPIENT}...")
-    send_email(subject, html)
+    if GMAIL_APP_PASS:
+        subject = f"HAI Swimwear 週銷量報表・{week_label}"
+        print(f"📧 寄送報表至 {REPORT_RECIPIENT}...")
+        send_email(subject, html)
+    else:
+        print("⚠️  未設定 GMAIL_APP_PASSWORD，略過寄信")
 
 if __name__ == "__main__":
     main()
