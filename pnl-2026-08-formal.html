@@ -141,8 +141,8 @@
 
   tr.leaf td.item { padding-left: 28px; font-size: 12.5px; }
 
-  .pos { color: var(--good); }
-  .neg { color: var(--ink); }
+  tr.grand td.val.pos { color: var(--good); }
+  tr.grand td.val.neg { color: var(--bad); }
 
   .note {
     font-size: 12px; color: var(--ink2); line-height: 1.75;
@@ -165,9 +165,14 @@
   <div class="banner">
     <b>本表為管理層試算（Flash P&amp;L），尚未經會計師事務所結帳。</b>
     會計師事務所之正式帳冊目前僅結算至 2026 年 7 月；本表沿用事務所之標準會計科目格式，
-    將 8 月已知之實際數（營收、成本、薪資、部分已入帳費用）填入，其餘尚未入帳之固定性費用
+    將 8 月已知之實際數（銷貨收入、成本、薪資、部分已入帳費用）填入，其餘尚未入帳之固定性費用
     （房租、廣告、水電、保費、稅捐、折舊等）暫以 <b>7 月實際數估列</b>，待 8 月帳務正式結算後
     請以事務所帳冊為準並更新本表。各行右側標籤標示資料性質，詳見下方圖例。
+    <br><br>
+    <b>銷貨折讓：</b>8月折讓金額事務所尚未結出，本表以 7 月實際折讓率（210,831 ÷ 2,732,215 ＝ 7.72%）
+    套用在 8 月銷貨收入上估列，得「營業收入總計」約 $2,967,169（估列）。由於折讓後營收降低、
+    但費用面仍有近四成金額暫以 7 月數字估列，本期淨利估算轉為<b>約 -$220,256 的估計虧損</b>，
+    與上一版「未扣折讓」試算差異很大，請務必等 8 月正式折讓數字結出後更新本表，不要直接引用此估計虧損數字對外呈報。
   </div>
 
   <div class="legend">
@@ -193,7 +198,7 @@
         <div><b>資料來源：</b>202608財務報表（通路損益表／每月營業額）、2026/2025支付明細表、薪資付款資料（2026台灣員工／2026香港員工）。</div>
         <ul>
           <li>香港員工薪資與港幣相關費用，均按公司慣例以匯率 <b>1 HKD = 4 TWD</b> 折算計入。</li>
-          <li><b>銷貨收入</b>採通路團隊彙總之淨額（已反映退換貨與折讓），與事務所帳冊「銷貨收入／銷貨折讓」分列之呈現方式不同，兩者口徑不完全一致。</li>
+          <li><b>銷貨收入</b>（$3,215,275）為通路團隊彙總之8月實際銷售總額；<b>銷貨折讓</b>套用7月實際折讓率（7.72%）估列為 -$248,106，兩者相減得「營業收入總計」$2,967,169，即本表計算毛利率／費用率／淨利率所使用的營收基礎。</li>
           <li><b>薪資支出</b>為8月台灣員工＋香港員工（匯率4）薪資總額，另加信義代班人員(Heidi)8月鐘點費，屬實際數。</li>
           <li><b>佣金支出</b>為各通路8月實際專櫃／平台抽成，屬實際數；<b>其他成本</b>為8月已知供應商發票（增站、甘芳穎攝影／修圖），屬已知數，未必涵蓋全部8月應計項目。</li>
           <li>估列費用（租金、廣告、水電、保費、稅捐、折舊、軟體使用費、勞務費等）沿用 7 月實際數，僅供估算參考，非8月實際發生數；一旦事務所結出8月帳，實際淨利可能與本表有明顯差異。</li>
@@ -206,7 +211,7 @@
 </div>
 
 <script>
-const REV = 3215275;
+const REV = 2967169; // 營業收入總計（銷貨收入 - 估列銷貨折讓）
 function pct(v){ return (v/REV*100).toFixed(1); }
 function money(v){ if (v===null) return '–'; return (v<0?'-$':'$') + Math.round(Math.abs(v)).toLocaleString('en-US'); }
 function tagHtml(t){
@@ -223,8 +228,8 @@ const ROWS = [
   {t:'leaf', label:'營業收入', val:null},
   {t:'leaf', label:'服務收入', val:null},
   {t:'leaf', label:'銷貨退回', val:null},
-  {t:'leaf', label:'銷貨折讓', val:null},
-  {t:'subtotal', label:'營業收入總計', val:3215275},
+  {t:'leaf', label:'銷貨折讓', val:-248106, tag:'est'},
+  {t:'subtotal', label:'營業收入總計', val:2967169},
 
   {t:'section', label:'營業成本'},
   {t:'leaf', label:'銷貨成本', val:-512474, tag:'actual'},
@@ -234,7 +239,7 @@ const ROWS = [
   {t:'leaf', label:'其他成本', val:-246641, tag:'known'},
   {t:'subtotal', label:'營業成本總計', val:-759115},
 
-  {t:'grand', label:'營業毛利', val:2456160},
+  {t:'grand', label:'營業毛利', val:2208054},
 
   {t:'section', label:'營業費用'},
   {t:'leaf', label:'薪資支出', val:-513492, tag:'actual'},
@@ -269,7 +274,7 @@ const ROWS = [
   {t:'leaf', label:'退休金', val:-17410, tag:'est'},
   {t:'subtotal', label:'營業費用總計', val:-2427406},
 
-  {t:'grand', label:'營業利益（損失）', val:28753},
+  {t:'grand', label:'營業利益（損失）', val:-219353},
 
   {t:'section', label:'營業外收益及費損'},
   {t:'leaf', label:'利息收入', val:null},
@@ -278,12 +283,12 @@ const ROWS = [
   {t:'leaf', label:'兌換損失', val:null},
   {t:'subtotal', label:'營業外收益及費損總計', val:-903},
 
-  {t:'grand', label:'稅前淨利（虧損）總計', val:27850},
+  {t:'grand', label:'稅前淨利（虧損）總計', val:-220256},
 
   {t:'section', label:'所得稅費用'},
   {t:'leaf', label:'所得稅費用（按季／年度估列，本表未含）', val:null},
 
-  {t:'grand', label:'本期淨利（損）', val:27850},
+  {t:'grand', label:'本期淨利（損）', val:-220256},
 ];
 
 const tbody = document.getElementById('tbody');
@@ -293,7 +298,8 @@ tbody.innerHTML = ROWS.map(r => {
   }
   const cls = r.t === 'leaf' ? 'leaf' : (r.t === 'subtotal' ? 'subtotal' : 'grand');
   const empty = r.val === null || r.val === undefined;
-  const valCls = empty ? 'val empty' : 'val';
+  let valCls = empty ? 'val empty' : 'val';
+  if (r.t === 'grand' && !empty) valCls += r.val < 0 ? ' neg' : ' pos';
   return `<tr class="${cls}">
     <td class="item">${r.label}</td>
     <td class="tagcol">${empty ? '' : tagHtml(r.tag)}</td>
