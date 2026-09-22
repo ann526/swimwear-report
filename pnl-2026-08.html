@@ -1,0 +1,305 @@
+<title>8月損益表</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  :root {
+    --ink: #0f172a;
+    --ink2: #475569;
+    --ink3: #94a3b8;
+    --page: #f8f9fb;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --accent: #6366f1;
+    --accent-light: #eef2ff;
+    --accent2: #818cf8;
+    --good: #047857;
+    --good-light: #ecfdf5;
+    --bad: #b91c1c;
+    --bad-light: #fef2f2;
+    --track: #f1f5f9;
+    --header-bg: #0f172a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #f1f5f9;
+      --ink2: #b6c0cf;
+      --ink3: #7c8798;
+      --page: #0b1120;
+      --card: #141b2d;
+      --border: #26314a;
+      --accent: #818cf8;
+      --accent-light: #1e2140;
+      --accent2: #a5b4fc;
+      --good: #34d399;
+      --good-light: #0d2a20;
+      --bad: #f87171;
+      --bad-light: #331313;
+      --track: #1c2438;
+      --header-bg: #05070d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #f1f5f9;
+    --ink2: #b6c0cf;
+    --ink3: #7c8798;
+    --page: #0b1120;
+    --card: #141b2d;
+    --border: #26314a;
+    --accent: #818cf8;
+    --accent-light: #1e2140;
+    --accent2: #a5b4fc;
+    --good: #34d399;
+    --good-light: #0d2a20;
+    --bad: #f87171;
+    --bad-light: #331313;
+    --track: #1c2438;
+    --header-bg: #05070d;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--ink);
+  }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .header {
+    background: var(--header-bg);
+    color: #f8fafc;
+    padding: 22px 24px calc(20px + env(safe-area-inset-top, 0px));
+    padding-top: calc(22px + env(safe-area-inset-top, 0px));
+  }
+  .eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: #94a3b8; margin-bottom: 6px;
+  }
+  .h-row { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .h-title { font-size: 22px; font-weight: 800; letter-spacing: -0.4px; }
+  .h-period { font-size: 12.5px; color: #cbd5e1; font-weight: 500; }
+
+  .wrap { max-width: 980px; margin: 0 auto; padding: 20px 24px 48px; }
+  @media (max-width: 600px) { .wrap { padding: 16px 16px 40px; } .header { padding-left:16px; padding-right:16px; } }
+
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px; margin-bottom: 20px;
+  }
+  .kpi {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .kpi-label { font-size: 11.5px; color: var(--ink3); font-weight: 700; letter-spacing: .03em; margin-bottom: 6px; }
+  .kpi-value { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+  .kpi-sub { font-size: 12px; color: var(--ink2); margin-top: 4px; font-weight: 500; }
+  .kpi-sub.good { color: var(--good); }
+  .kpi-sub.bad { color: var(--bad); }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px 18px 16px; margin-bottom: 18px;
+  }
+  .card-title { font-size: 14.5px; font-weight: 700; margin-bottom: 2px; }
+  .card-desc { font-size: 12px; color: var(--ink3); margin-bottom: 14px; }
+
+  /* trend chart */
+  .chart-wrap { overflow-x: auto; }
+  svg text { fill: var(--ink3); font-family: 'Inter', system-ui, sans-serif; }
+  .bar-val { fill: var(--ink2); font-weight: 600; }
+  .bar-val.cur { fill: var(--accent); font-weight: 800; }
+  .bar-month.cur { fill: var(--accent); font-weight: 700; }
+
+  /* table */
+  .tbl-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 13px; }
+  th, td { padding: 9px 10px; text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  thead th {
+    font-size: 11px; color: var(--ink3); font-weight: 700; text-transform: uppercase; letter-spacing: .02em;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.channel { font-weight: 700; }
+  tr.total td { font-weight: 800; border-top: 2px solid var(--ink); background: var(--accent-light); }
+  .pos { color: var(--good); }
+  .neg { color: var(--bad); }
+  .pill {
+    display: inline-block; padding: 1px 7px; border-radius: 5px; font-size: 11px; font-weight: 700;
+  }
+  .pill.pos { background: var(--good-light); color: var(--good); }
+  .pill.neg { background: var(--bad-light); color: var(--bad); }
+
+  .note {
+    font-size: 12px; color: var(--ink2); line-height: 1.7;
+  }
+  .note b { color: var(--ink); }
+  .note ul { margin: 6px 0 0; padding-left: 18px; }
+</style>
+
+<div class="header">
+  <div class="eyebrow">HAI Swimwear · 財務報表</div>
+  <div class="h-row">
+    <div class="h-title">8 月份損益表</div>
+    <div class="h-period">2026/08/01 – 2026/08/31 · 新台幣（NTD）</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">營業額</div>
+      <div class="kpi-value num">$3,215,275</div>
+      <div class="kpi-sub good num">▲ 15.8% 較 7 月（$2,776,176）</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">毛利／毛利率</div>
+      <div class="kpi-value num">$2,428,254</div>
+      <div class="kpi-sub num">毛利率 75.5%</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">營業費用合計</div>
+      <div class="kpi-value num">$1,281,710</div>
+      <div class="kpi-sub num">佔營業額 39.9%</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">淨利／淨利率</div>
+      <div class="kpi-value num">$1,146,544</div>
+      <div class="kpi-sub good num">淨利率 35.7%</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">月營業額趨勢</div>
+    <div class="card-desc">2026 年 1–8 月，全通路合計（含香港以匯率 4 折算）</div>
+    <div class="chart-wrap">
+      <svg viewBox="0 0 880 220" width="100%" style="min-width:640px;display:block">
+        <!-- gridline baseline -->
+        <line x1="40" y1="180" x2="860" y2="180" stroke="var(--border)" stroke-width="1"/>
+        <!-- bars -->
+        <!-- scale: max 3215275 -> bar max height 140 -->
+      </svg>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">通路別損益明細</div>
+    <div class="card-desc">各通路營業額、成本、費用與淨利（新台幣）</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>通路</th>
+            <th>營業額</th>
+            <th>銷貨成本</th>
+            <th>抽成</th>
+            <th>毛利</th>
+            <th>毛利率</th>
+            <th>營業費用</th>
+            <th>淨利</th>
+            <th>淨利率</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">說明</div>
+    <div class="note">
+      <div><b>資料來源：</b>202608財務報表（通路損益表／每月營業額）、薪資付款資料（2026台灣員工／2026香港員工）。</div>
+      <ul>
+        <li>香港（Harbour City）營業額與人事成本，均按公司慣例以匯率 <b>1 HKD = 4 TWD</b> 折算新台幣後併入本表。</li>
+        <li>「營業費用」為各通路包材費用、通路變動費用（含專櫃抽成外之通路費用）、JJ倉租／倉管、固定成本分攤、人事成本、當月勞健保／退休提繳之合計。</li>
+        <li>本表為公司內部通路別管理損益（Management P&amp;L），尚未計入營業外收支與所得稅費用；正式會計師事務所損益表（依 2026/08/31 資料，會計帳仍結算至 7 月）於帳務結帳後可能略有差異。</li>
+        <li>Harbour City（香港）本月因通路變動費用偏高（含場租／營運費用）呈現淨損，為本月唯一虧損通路。</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const CHANNELS = [
+  {name:"官網", rev:1047095, cogs:206424.8738, comm:0, gp:840670.1262, gpm:0.80285946, opex:270983, np:569687.1262, npm:0.5440644127},
+  {name:"信義大遠百", rev:783641.0, cogs:110719.2784, comm:97615.0, gp:575306.7216, gpm:0.7341457652, opex:212388, np:362918.7216, npm:0.4631185984},
+  {name:"新竹大遠百", rev:206551.0, cogs:27522.59968, comm:44268.0, gp:134760.4003, gpm:0.6524316044, opex:101885, np:32875.40032, npm:0.159163598},
+  {name:"台中大遠百", rev:423003.0, cogs:61834.27816, comm:51722.0, gp:309446.7218, gpm:0.7315473456, opex:197464, np:111982.7218, npm:0.2647326895},
+  {name:"Harbour City（香港）", rev:314968.0, cogs:48061.44223, comm:0, gp:356164.0, gpm:1.130794239, opex:498682, np:-142518, npm:-0.4524840619},
+  {name:"高雄", rev:47753.0, cogs:6813.072143, comm:15092.0, gp:25847.92786, gpm:0.5412838535, opex:0, np:25847.92786, npm:0.5412838535},
+  {name:"恆春", rev:53064.0, cogs:6682.775546, comm:17238.0, gp:29143.22445, gpm:0.5492089638, opex:160, np:28983.22445, npm:0.5461937369},
+  {name:"小琉球", rev:22780.0, cogs:3266.42881, comm:7714.0, gp:8212.0, gpm:0.3604916594, opex:148, np:8064, npm:0.3539947322},
+  {name:"海南", rev:316420.0, cogs:41149.49068, comm:126568.0, gp:148702.5093, gpm:0.4699529401, opex:0, np:148702.5093, npm:0.4699529401},
+];
+const TOTAL = {name:"TOTAL", rev:3215275, cogs:512474.239449, comm:360217, gp:2428253.63151, gpm:0.7552242441, opex:1281710, np:1146543.63153, npm:0.3565927118};
+
+function money(n){ return (n<0?'-$':'$') + Math.round(Math.abs(n)).toLocaleString('en-US'); }
+function pct(n){ return (n*100).toFixed(1) + '%'; }
+
+const tbody = document.getElementById('tbody');
+function rowHtml(d, isTotal){
+  const npCls = d.np < 0 ? 'neg' : '';
+  const pillCls = d.np < 0 ? 'neg' : 'pos';
+  return `<tr class="${isTotal?'total':''}">
+    <td class="channel">${d.name}</td>
+    <td class="num">${money(d.rev)}</td>
+    <td class="num">${money(d.cogs)}</td>
+    <td class="num">${d.comm ? money(d.comm) : '–'}</td>
+    <td class="num">${money(d.gp)}</td>
+    <td class="num">${pct(d.gpm)}</td>
+    <td class="num">${d.opex ? money(d.opex) : '–'}</td>
+    <td class="num ${npCls}">${money(d.np)}</td>
+    <td class="num"><span class="pill ${pillCls}">${pct(d.npm)}</span></td>
+  </tr>`;
+}
+tbody.innerHTML = CHANNELS.map(d => rowHtml(d,false)).join('') + rowHtml(TOTAL, true);
+
+// ---- trend chart ----
+const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月'];
+const VALUES = [2242598, 2446088, 2513547, 1980845, 2077385, 2612211, 2776176, 3215275];
+const svg = document.querySelector('.chart-wrap svg');
+const svgNS = 'http://www.w3.org/2000/svg';
+const chartLeft = 40, chartRight = 860, chartBottom = 180, chartTop = 20;
+const n = VALUES.length;
+const gap = 14;
+const barW = (chartRight - chartLeft - gap*(n-1)) / n;
+const maxV = Math.max(...VALUES);
+const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6366f1';
+const ink2 = getComputedStyle(document.documentElement).getPropertyValue('--ink2').trim() || '#475569';
+
+VALUES.forEach((v, i) => {
+  const h = (v / maxV) * (chartBottom - chartTop);
+  const x = chartLeft + i * (barW + gap);
+  const y = chartBottom - h;
+  const isCur = i === n - 1;
+
+  const rect = document.createElementNS(svgNS, 'rect');
+  rect.setAttribute('x', x);
+  rect.setAttribute('y', y);
+  rect.setAttribute('width', barW);
+  rect.setAttribute('height', h);
+  rect.setAttribute('rx', 5);
+  rect.setAttribute('fill', isCur ? accent : 'var(--track)');
+  svg.appendChild(rect);
+
+  const val = document.createElementNS(svgNS, 'text');
+  val.setAttribute('x', x + barW/2);
+  val.setAttribute('y', y - 8);
+  val.setAttribute('text-anchor', 'middle');
+  val.setAttribute('font-size', '11.5');
+  val.setAttribute('class', 'bar-val' + (isCur ? ' cur' : ''));
+  val.textContent = (v/10000).toFixed(0) + '萬';
+  svg.appendChild(val);
+
+  const lbl = document.createElementNS(svgNS, 'text');
+  lbl.setAttribute('x', x + barW/2);
+  lbl.setAttribute('y', chartBottom + 18);
+  lbl.setAttribute('text-anchor', 'middle');
+  lbl.setAttribute('font-size', '11.5');
+  lbl.setAttribute('class', 'bar-month' + (isCur ? ' cur' : ''));
+  lbl.textContent = MONTHS[i];
+  svg.appendChild(lbl);
+});
+</script>
