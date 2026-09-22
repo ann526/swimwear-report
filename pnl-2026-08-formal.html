@@ -1,0 +1,304 @@
+<title>8月會計損益表</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  :root {
+    --ink: #0f172a;
+    --ink2: #475569;
+    --ink3: #94a3b8;
+    --page: #f8f9fb;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --accent: #6366f1;
+    --accent-light: #eef2ff;
+    --good: #047857;
+    --bad: #b91c1c;
+    --warn-bg: #fffbeb;
+    --warn-border: #fde68a;
+    --warn-text: #92400e;
+    --tag-actual-bg: #ecfdf5;
+    --tag-actual-text: #047857;
+    --tag-known-bg: #eff6ff;
+    --tag-known-text: #1d4ed8;
+    --tag-est-bg: #f1f5f9;
+    --tag-est-text: #64748b;
+    --header-bg: #0f172a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #f1f5f9;
+      --ink2: #b6c0cf;
+      --ink3: #7c8798;
+      --page: #0b1120;
+      --card: #141b2d;
+      --border: #26314a;
+      --accent: #818cf8;
+      --accent-light: #1e2140;
+      --good: #34d399;
+      --bad: #f87171;
+      --warn-bg: #2a2210;
+      --warn-border: #4d3d10;
+      --warn-text: #fbbf24;
+      --tag-actual-bg: #0d2a20;
+      --tag-actual-text: #34d399;
+      --tag-known-bg: #10203a;
+      --tag-known-text: #7fa8f5;
+      --tag-est-bg: #1c2438;
+      --tag-est-text: #8a94a6;
+      --header-bg: #05070d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #f1f5f9;
+    --ink2: #b6c0cf;
+    --ink3: #7c8798;
+    --page: #0b1120;
+    --card: #141b2d;
+    --border: #26314a;
+    --accent: #818cf8;
+    --accent-light: #1e2140;
+    --good: #34d399;
+    --bad: #f87171;
+    --warn-bg: #2a2210;
+    --warn-border: #4d3d10;
+    --warn-text: #fbbf24;
+    --tag-actual-bg: #0d2a20;
+    --tag-actual-text: #34d399;
+    --tag-known-bg: #10203a;
+    --tag-known-text: #7fa8f5;
+    --tag-est-bg: #1c2438;
+    --tag-est-text: #8a94a6;
+    --header-bg: #05070d;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--ink);
+  }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .header {
+    background: var(--header-bg);
+    color: #f8fafc;
+    padding: 22px 24px calc(20px + env(safe-area-inset-top, 0px));
+    padding-top: calc(22px + env(safe-area-inset-top, 0px));
+  }
+  .eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: #94a3b8; margin-bottom: 6px;
+  }
+  .h-row { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .h-title { font-size: 22px; font-weight: 800; letter-spacing: -0.4px; }
+  .h-period { font-size: 12.5px; color: #cbd5e1; font-weight: 500; }
+
+  .wrap { max-width: 760px; margin: 0 auto; padding: 20px 24px 48px; }
+  @media (max-width: 600px) { .wrap { padding: 16px 16px 40px; } .header { padding-left:16px; padding-right:16px; } }
+
+  .banner {
+    background: var(--warn-bg); border: 1px solid var(--warn-border); border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 18px; font-size: 12.5px; line-height: 1.7; color: var(--warn-text);
+  }
+  .banner b { font-weight: 700; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .tag { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 5px; white-space: nowrap; }
+  .tag.actual { background: var(--tag-actual-bg); color: var(--tag-actual-text); }
+  .tag.known  { background: var(--tag-known-bg); color: var(--tag-known-text); }
+  .tag.est    { background: var(--tag-est-bg); color: var(--tag-est-text); }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink2); }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 6px 0; margin-bottom: 18px; overflow: hidden;
+  }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  colgroup .c-item {}
+  th, td { padding: 6px 16px; }
+  thead th {
+    font-size: 10.5px; color: var(--ink3); font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+    border-bottom: 1px solid var(--border); text-align: right; padding-top: 10px; padding-bottom: 8px;
+  }
+  thead th:first-child, thead th:nth-child(2) { text-align: left; }
+  td { text-align: right; border-bottom: 1px solid transparent; }
+  td.item { text-align: left; color: var(--ink2); }
+  td.tagcol { text-align: left; }
+  td.val { color: var(--ink); }
+  td.val.empty { color: var(--ink3); }
+  td.pct { color: var(--ink3); width: 56px; }
+
+  tr.section-head td { padding-top: 16px; font-weight: 800; font-size: 12.5px; color: var(--ink); border-bottom: 1px solid var(--border); }
+  tr.section-head td.item { padding-bottom: 6px; }
+
+  tr.subtotal td { font-weight: 800; border-top: 1px solid var(--border); background: var(--accent-light); }
+  tr.subtotal td.item { padding-left: 16px; }
+  tr.grand td { font-weight: 800; border-top: 2px solid var(--ink); background: var(--accent-light); font-size: 14px; }
+  tr.grand td.item { padding-top: 10px; padding-bottom: 10px; }
+  tr.grand td { padding-top: 10px; padding-bottom: 10px; }
+
+  tr.leaf td.item { padding-left: 28px; font-size: 12.5px; }
+
+  .pos { color: var(--good); }
+  .neg { color: var(--ink); }
+
+  .note {
+    font-size: 12px; color: var(--ink2); line-height: 1.75;
+  }
+  .note b { color: var(--ink); }
+  .note ul { margin: 6px 0 0; padding-left: 18px; }
+  .note li { margin-bottom: 4px; }
+</style>
+
+<div class="header">
+  <div class="eyebrow">HAI Swimwear · 財務報表</div>
+  <div class="h-row">
+    <div class="h-title">損益表</div>
+    <div class="h-period">2026/08/01 – 2026/08/31 · 新台幣（NTD）</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="banner">
+    <b>本表為管理層試算（Flash P&amp;L），尚未經會計師事務所結帳。</b>
+    會計師事務所之正式帳冊目前僅結算至 2026 年 7 月；本表沿用事務所之標準會計科目格式，
+    將 8 月已知之實際數（營收、成本、薪資、部分已入帳費用）填入，其餘尚未入帳之固定性費用
+    （房租、廣告、水電、保費、稅捐、折舊等）暫以 <b>7 月實際數估列</b>，待 8 月帳務正式結算後
+    請以事務所帳冊為準並更新本表。各行右側標籤標示資料性質，詳見下方圖例。
+  </div>
+
+  <div class="legend">
+    <span class="legend-item"><span class="tag actual">實際</span>8月已結算之確定數字</span>
+    <span class="legend-item"><span class="tag known">已知</span>8月已入帳之部分費用</span>
+    <span class="legend-item"><span class="tag est">估列</span>沿用7月實際數，待8月結帳更新</span>
+  </div>
+
+  <div class="card">
+    <table>
+      <colgroup><col style="width:auto"><col style="width:72px"><col style="width:88px"><col style="width:56px"></colgroup>
+      <thead>
+        <tr><th>會計項目</th><th>資料性質</th><th>金額</th><th>%</th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div style="padding:16px 18px 18px">
+      <div style="font-size:13.5px;font-weight:700;margin-bottom:8px">附註</div>
+      <div class="note">
+        <div><b>資料來源：</b>202608財務報表（通路損益表／每月營業額）、2026/2025支付明細表、薪資付款資料（2026台灣員工／2026香港員工）。</div>
+        <ul>
+          <li>香港員工薪資與港幣相關費用，均按公司慣例以匯率 <b>1 HKD = 4 TWD</b> 折算計入。</li>
+          <li><b>銷貨收入</b>採通路團隊彙總之淨額（已反映退換貨與折讓），與事務所帳冊「銷貨收入／銷貨折讓」分列之呈現方式不同，兩者口徑不完全一致。</li>
+          <li><b>薪資支出</b>為8月台灣員工＋香港員工（匯率4）薪資總額，另加信義代班人員(Heidi)8月鐘點費，屬實際數。</li>
+          <li><b>佣金支出</b>為各通路8月實際專櫃／平台抽成，屬實際數；<b>其他成本</b>為8月已知供應商發票（增站、甘芳穎攝影／修圖），屬已知數，未必涵蓋全部8月應計項目。</li>
+          <li>估列費用（租金、廣告、水電、保費、稅捐、折舊、軟體使用費、勞務費等）沿用 7 月實際數，僅供估算參考，非8月實際發生數；一旦事務所結出8月帳，實際淨利可能與本表有明顯差異。</li>
+          <li>本表未列示所得稅費用（按季／年度計算，非按月估列）。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const REV = 3215275;
+function pct(v){ return (v/REV*100).toFixed(1); }
+function money(v){ if (v===null) return '–'; return (v<0?'-$':'$') + Math.round(Math.abs(v)).toLocaleString('en-US'); }
+function tagHtml(t){
+  if(!t) return '';
+  const map = {actual:['實際','actual'], known:['已知','known'], est:['估列','est']};
+  const [label,cls] = map[t];
+  return `<span class="tag ${cls}">${label}</span>`;
+}
+
+// rows: {t:'section'|'leaf'|'subtotal'|'grand', label, val, tag}
+const ROWS = [
+  {t:'section', label:'營業收入'},
+  {t:'leaf', label:'銷貨收入', val:3215275, tag:'actual'},
+  {t:'leaf', label:'營業收入', val:null},
+  {t:'leaf', label:'服務收入', val:null},
+  {t:'leaf', label:'銷貨退回', val:null},
+  {t:'leaf', label:'銷貨折讓', val:null},
+  {t:'subtotal', label:'營業收入總計', val:3215275},
+
+  {t:'section', label:'營業成本'},
+  {t:'leaf', label:'銷貨成本', val:-512474, tag:'actual'},
+  {t:'leaf', label:'進貨', val:null},
+  {t:'leaf', label:'進貨退出／進貨折讓', val:null},
+  {t:'leaf', label:'勞務成本', val:null},
+  {t:'leaf', label:'其他成本', val:-246641, tag:'known'},
+  {t:'subtotal', label:'營業成本總計', val:-759115},
+
+  {t:'grand', label:'營業毛利', val:2456160},
+
+  {t:'section', label:'營業費用'},
+  {t:'leaf', label:'薪資支出', val:-513492, tag:'actual'},
+  {t:'leaf', label:'薪資支出-公司提繳', val:null},
+  {t:'leaf', label:'租金支出', val:-382465, tag:'est'},
+  {t:'leaf', label:'文具用品', val:-1101, tag:'est'},
+  {t:'leaf', label:'旅費', val:null},
+  {t:'leaf', label:'運費', val:-24201, tag:'known'},
+  {t:'leaf', label:'郵電費', val:-7318, tag:'est'},
+  {t:'leaf', label:'修繕費', val:null},
+  {t:'leaf', label:'廣告費', val:-444635, tag:'est'},
+  {t:'leaf', label:'水電瓦斯費', val:-7414, tag:'est'},
+  {t:'leaf', label:'保險費-健保費', val:-31766, tag:'est'},
+  {t:'leaf', label:'保險費-勞保費', val:-39232, tag:'est'},
+  {t:'leaf', label:'交際費', val:-672, tag:'est'},
+  {t:'leaf', label:'稅捐', val:-15750, tag:'est'},
+  {t:'leaf', label:'各項折舊', val:-185548, tag:'est'},
+  {t:'leaf', label:'伙食費', val:null},
+  {t:'leaf', label:'職工福利', val:null},
+  {t:'leaf', label:'佣金支出', val:-360217, tag:'actual'},
+  {t:'leaf', label:'訓練費', val:-18648, tag:'known'},
+  {t:'leaf', label:'其他費用', val:-105000, tag:'known'},
+  {t:'leaf', label:'書報雜誌', val:null},
+  {t:'leaf', label:'雜項購置', val:-32874, tag:'est'},
+  {t:'leaf', label:'手續費', val:-6630, tag:'est'},
+  {t:'leaf', label:'交通費', val:-6692, tag:'known'},
+  {t:'leaf', label:'燃料費', val:null},
+  {t:'leaf', label:'勞務費', val:-143873, tag:'est'},
+  {t:'leaf', label:'執行業務報酬', val:null},
+  {t:'leaf', label:'軟體使用費', val:-79933, tag:'est'},
+  {t:'leaf', label:'雜費', val:-2536, tag:'est'},
+  {t:'leaf', label:'退休金', val:-17410, tag:'est'},
+  {t:'subtotal', label:'營業費用總計', val:-2427406},
+
+  {t:'grand', label:'營業利益（損失）', val:28753},
+
+  {t:'section', label:'營業外收益及費損'},
+  {t:'leaf', label:'利息收入', val:null},
+  {t:'leaf', label:'兌換盈益', val:null},
+  {t:'leaf', label:'利息支出', val:-903, tag:'est'},
+  {t:'leaf', label:'兌換損失', val:null},
+  {t:'subtotal', label:'營業外收益及費損總計', val:-903},
+
+  {t:'grand', label:'稅前淨利（虧損）總計', val:27850},
+
+  {t:'section', label:'所得稅費用'},
+  {t:'leaf', label:'所得稅費用（按季／年度估列，本表未含）', val:null},
+
+  {t:'grand', label:'本期淨利（損）', val:27850},
+];
+
+const tbody = document.getElementById('tbody');
+tbody.innerHTML = ROWS.map(r => {
+  if (r.t === 'section') {
+    return `<tr class="section-head"><td class="item" colspan="4">${r.label}</td></tr>`;
+  }
+  const cls = r.t === 'leaf' ? 'leaf' : (r.t === 'subtotal' ? 'subtotal' : 'grand');
+  const empty = r.val === null || r.val === undefined;
+  const valCls = empty ? 'val empty' : 'val';
+  return `<tr class="${cls}">
+    <td class="item">${r.label}</td>
+    <td class="tagcol">${empty ? '' : tagHtml(r.tag)}</td>
+    <td class="${valCls} num">${money(r.val)}</td>
+    <td class="pct num">${empty ? '' : pct(r.val)+'%'}</td>
+  </tr>`;
+}).join('');
+</script>
