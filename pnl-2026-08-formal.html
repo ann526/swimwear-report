@@ -20,8 +20,8 @@
     --tag-actual-text: #047857;
     --tag-known-bg: #eff6ff;
     --tag-known-text: #1d4ed8;
-    --tag-est-bg: #f1f5f9;
-    --tag-est-text: #64748b;
+    --tag-pending-bg: #f1f5f9;
+    --tag-pending-text: #64748b;
     --header-bg: #0f172a;
   }
   @media (prefers-color-scheme: dark) {
@@ -43,8 +43,8 @@
       --tag-actual-text: #34d399;
       --tag-known-bg: #10203a;
       --tag-known-text: #7fa8f5;
-      --tag-est-bg: #1c2438;
-      --tag-est-text: #8a94a6;
+      --tag-pending-bg: #1c2438;
+      --tag-pending-text: #8a94a6;
       --header-bg: #05070d;
     }
   }
@@ -66,8 +66,8 @@
     --tag-actual-text: #34d399;
     --tag-known-bg: #10203a;
     --tag-known-text: #7fa8f5;
-    --tag-est-bg: #1c2438;
-    --tag-est-text: #8a94a6;
+    --tag-pending-bg: #1c2438;
+    --tag-pending-text: #8a94a6;
     --header-bg: #05070d;
   }
 
@@ -107,7 +107,7 @@
   .tag { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 5px; white-space: nowrap; }
   .tag.actual { background: var(--tag-actual-bg); color: var(--tag-actual-text); }
   .tag.known  { background: var(--tag-known-bg); color: var(--tag-known-text); }
-  .tag.est    { background: var(--tag-est-bg); color: var(--tag-est-text); }
+  .tag.pending { background: var(--tag-pending-bg); color: var(--tag-pending-text); border: 1px dashed var(--border); }
   .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink2); }
 
   .card {
@@ -143,6 +143,10 @@
 
   tr.grand td.val.pos { color: var(--good); }
   tr.grand td.val.neg { color: var(--bad); }
+  td.val .partial-mark { color: var(--ink3); font-weight: 700; margin-left: 1px; }
+  td.val.pendingtotal { color: var(--ink3); font-weight: 700; font-style: italic; font-size: 12.5px; }
+  .missing-count { font-size: 10.5px; color: var(--ink3); font-weight: 600; font-style: normal; margin-left: 4px; }
+  .asterisk-note { font-size: 11px; color: var(--ink3); padding: 8px 16px 2px; }
 
   .note {
     font-size: 12px; color: var(--ink2); line-height: 1.75;
@@ -163,22 +167,22 @@
 <div class="wrap">
 
   <div class="banner">
-    <b>本表為管理層試算（Flash P&amp;L），尚未經會計師事務所結帳。</b>
-    會計師事務所之正式帳冊目前僅結算至 2026 年 7 月；本表沿用事務所之標準會計科目格式，
-    將 8 月已知之實際數（銷貨收入、成本、薪資、部分已入帳費用）填入，其餘尚未入帳之固定性費用
-    （房租、廣告、水電、保費、稅捐、折舊等）暫以 <b>7 月實際數估列</b>，待 8 月帳務正式結算後
-    請以事務所帳冊為準並更新本表。各行右側標籤標示資料性質，詳見下方圖例。
+    <b>本表只放 8 月真實數字，不再用 7 月數字估列。</b>
+    凡是還沒拿到 8 月實際金額的項目，一律標示「<b>待提供</b>」並留白，不計入任何加總——
+    因此「營業費用總計」以下（營業利益、稅前淨利、本期淨利）目前<b>無法計算</b>，
+    要等下面列出的項目補齊後才會顯示數字。「營業收入總計」與「營業毛利」兩列已知數字齊全，
+    只差銷貨折讓一項，故以＊標示為「未扣折讓」的暫定金額。
     <br><br>
-    <b>銷貨折讓：</b>8月折讓金額事務所尚未結出，本表以 7 月實際折讓率（210,831 ÷ 2,732,215 ＝ 7.72%）
-    套用在 8 月銷貨收入上估列，得「營業收入總計」約 $2,967,169（估列）。由於折讓後營收降低、
-    但費用面仍有近四成金額暫以 7 月數字估列，本期淨利估算轉為<b>約 -$220,256 的估計虧損</b>，
-    與上一版「未扣折讓」試算差異很大，請務必等 8 月正式折讓數字結出後更新本表，不要直接引用此估計虧損數字對外呈報。
+    <b>還缺以下 8 月實際數字才能算出完整損益表：</b>
+    銷貨折讓、租金支出、文具用品、郵電費、廣告費、水電瓦斯費、保險費（健保／勞保）、交際費、稅捐、
+    各項折舊、雜項購置、手續費、勞務費、軟體使用費、雜費、退休金、利息支出（共17項）。
+    提供方式很簡單：截圖帳單、貼金額文字、或給我連結都可以，缺哪項就先給哪項，我隨時更新這張表。
   </div>
 
   <div class="legend">
-    <span class="legend-item"><span class="tag actual">實際</span>8月已結算之確定數字</span>
-    <span class="legend-item"><span class="tag known">已知</span>8月已入帳之部分費用</span>
-    <span class="legend-item"><span class="tag est">估列</span>沿用7月實際數，待8月結帳更新</span>
+    <span class="legend-item"><span class="tag actual">實際</span>8月已確定之數字</span>
+    <span class="legend-item"><span class="tag known">已知</span>8月已入帳之部分費用（來自支付明細表）</span>
+    <span class="legend-item"><span class="tag pending">待提供</span>尚無8月數字，需要您補充</span>
   </div>
 
   <div class="card">
@@ -198,10 +202,10 @@
         <div><b>資料來源：</b>202608財務報表（通路損益表／每月營業額）、2026/2025支付明細表、薪資付款資料（2026台灣員工／2026香港員工）。</div>
         <ul>
           <li>香港員工薪資與港幣相關費用，均按公司慣例以匯率 <b>1 HKD = 4 TWD</b> 折算計入。</li>
-          <li><b>銷貨收入</b>（$3,215,275）為通路團隊彙總之8月實際銷售總額；<b>銷貨折讓</b>套用7月實際折讓率（7.72%）估列為 -$248,106，兩者相減得「營業收入總計」$2,967,169，即本表計算毛利率／費用率／淨利率所使用的營收基礎。</li>
+          <li><b>銷貨收入</b>（$3,215,275）為通路團隊彙總之8月實際銷售總額，屬實際數；<b>銷貨折讓</b>8月數字尚未取得，標示「待提供」，故「營業收入總計」「營業毛利」兩列金額標示＊，代表暫未扣除折讓。</li>
           <li><b>薪資支出</b>為8月台灣員工＋香港員工（匯率4）薪資總額，另加信義代班人員(Heidi)8月鐘點費，屬實際數。</li>
-          <li><b>佣金支出</b>為各通路8月實際專櫃／平台抽成，屬實際數；<b>其他成本</b>為8月已知供應商發票（增站、甘芳穎攝影／修圖），屬已知數，未必涵蓋全部8月應計項目。</li>
-          <li>估列費用（租金、廣告、水電、保費、稅捐、折舊、軟體使用費、勞務費等）沿用 7 月實際數，僅供估算參考，非8月實際發生數；一旦事務所結出8月帳，實際淨利可能與本表有明顯差異。</li>
+          <li><b>佣金支出</b>為各通路8月實際專櫃／平台抽成，屬實際數；<b>其他成本、運費、訓練費、其他費用、交通費</b>為支付明細表中8月已入帳之供應商發票，屬已知數，但不保證涵蓋當月全部應計項目。</li>
+          <li>標示「待提供」的項目（租金、廣告、水電、保費、稅捐、折舊、軟體使用費、勞務費等）目前沒有 8 月實際數字，<b>沒有用任何月份的數字頂替</b>，因此「營業費用總計」以下暫時無法計算。</li>
           <li>本表未列示所得稅費用（按季／年度計算，非按月估列）。</li>
         </ul>
       </div>
@@ -211,25 +215,28 @@
 </div>
 
 <script>
-const REV = 2967169; // 營業收入總計（銷貨收入 - 估列銷貨折讓）
+const REV = 3215275; // 銷貨收入（已知的唯一完整收入基礎；折讓待補）
 function pct(v){ return (v/REV*100).toFixed(1); }
 function money(v){ if (v===null) return '–'; return (v<0?'-$':'$') + Math.round(Math.abs(v)).toLocaleString('en-US'); }
 function tagHtml(t){
   if(!t) return '';
-  const map = {actual:['實際','actual'], known:['已知','known'], est:['估列','est']};
+  const map = {actual:['實際','actual'], known:['已知','known'], pending:['待提供','pending']};
   const [label,cls] = map[t];
   return `<span class="tag ${cls}">${label}</span>`;
 }
 
-// rows: {t:'section'|'leaf'|'subtotal'|'grand', label, val, tag}
+// rows: {t:'section'|'leaf'|'subtotal'|'grand'|'blocked', label, val, tag, partial}
+// val:null + tag:'pending'  -> 該科目8月無資料，需使用者提供
+// val:null + no tag         -> 該科目本業務長期不適用（7月結帳時也是0）
+// t:'blocked'                -> 因下方仍有待提供項目，此小計/總計暫時無法計算
 const ROWS = [
   {t:'section', label:'營業收入'},
   {t:'leaf', label:'銷貨收入', val:3215275, tag:'actual'},
   {t:'leaf', label:'營業收入', val:null},
   {t:'leaf', label:'服務收入', val:null},
   {t:'leaf', label:'銷貨退回', val:null},
-  {t:'leaf', label:'銷貨折讓', val:-248106, tag:'est'},
-  {t:'subtotal', label:'營業收入總計', val:2967169},
+  {t:'leaf', label:'銷貨折讓', val:null, tag:'pending'},
+  {t:'subtotal', label:'營業收入總計', val:3215275, partial:true},
 
   {t:'section', label:'營業成本'},
   {t:'leaf', label:'銷貨成本', val:-512474, tag:'actual'},
@@ -239,56 +246,56 @@ const ROWS = [
   {t:'leaf', label:'其他成本', val:-246641, tag:'known'},
   {t:'subtotal', label:'營業成本總計', val:-759115},
 
-  {t:'grand', label:'營業毛利', val:2208054},
+  {t:'grand', label:'營業毛利', val:2456160, partial:true},
 
   {t:'section', label:'營業費用'},
   {t:'leaf', label:'薪資支出', val:-513492, tag:'actual'},
   {t:'leaf', label:'薪資支出-公司提繳', val:null},
-  {t:'leaf', label:'租金支出', val:-382465, tag:'est'},
-  {t:'leaf', label:'文具用品', val:-1101, tag:'est'},
+  {t:'leaf', label:'租金支出', val:null, tag:'pending'},
+  {t:'leaf', label:'文具用品', val:null, tag:'pending'},
   {t:'leaf', label:'旅費', val:null},
   {t:'leaf', label:'運費', val:-24201, tag:'known'},
-  {t:'leaf', label:'郵電費', val:-7318, tag:'est'},
+  {t:'leaf', label:'郵電費', val:null, tag:'pending'},
   {t:'leaf', label:'修繕費', val:null},
-  {t:'leaf', label:'廣告費', val:-444635, tag:'est'},
-  {t:'leaf', label:'水電瓦斯費', val:-7414, tag:'est'},
-  {t:'leaf', label:'保險費-健保費', val:-31766, tag:'est'},
-  {t:'leaf', label:'保險費-勞保費', val:-39232, tag:'est'},
-  {t:'leaf', label:'交際費', val:-672, tag:'est'},
-  {t:'leaf', label:'稅捐', val:-15750, tag:'est'},
-  {t:'leaf', label:'各項折舊', val:-185548, tag:'est'},
+  {t:'leaf', label:'廣告費', val:null, tag:'pending'},
+  {t:'leaf', label:'水電瓦斯費', val:null, tag:'pending'},
+  {t:'leaf', label:'保險費-健保費', val:null, tag:'pending'},
+  {t:'leaf', label:'保險費-勞保費', val:null, tag:'pending'},
+  {t:'leaf', label:'交際費', val:null, tag:'pending'},
+  {t:'leaf', label:'稅捐', val:null, tag:'pending'},
+  {t:'leaf', label:'各項折舊', val:null, tag:'pending'},
   {t:'leaf', label:'伙食費', val:null},
   {t:'leaf', label:'職工福利', val:null},
   {t:'leaf', label:'佣金支出', val:-360217, tag:'actual'},
   {t:'leaf', label:'訓練費', val:-18648, tag:'known'},
   {t:'leaf', label:'其他費用', val:-105000, tag:'known'},
   {t:'leaf', label:'書報雜誌', val:null},
-  {t:'leaf', label:'雜項購置', val:-32874, tag:'est'},
-  {t:'leaf', label:'手續費', val:-6630, tag:'est'},
+  {t:'leaf', label:'雜項購置', val:null, tag:'pending'},
+  {t:'leaf', label:'手續費', val:null, tag:'pending'},
   {t:'leaf', label:'交通費', val:-6692, tag:'known'},
   {t:'leaf', label:'燃料費', val:null},
-  {t:'leaf', label:'勞務費', val:-143873, tag:'est'},
+  {t:'leaf', label:'勞務費', val:null, tag:'pending'},
   {t:'leaf', label:'執行業務報酬', val:null},
-  {t:'leaf', label:'軟體使用費', val:-79933, tag:'est'},
-  {t:'leaf', label:'雜費', val:-2536, tag:'est'},
-  {t:'leaf', label:'退休金', val:-17410, tag:'est'},
-  {t:'subtotal', label:'營業費用總計', val:-2427406},
+  {t:'leaf', label:'軟體使用費', val:null, tag:'pending'},
+  {t:'leaf', label:'雜費', val:null, tag:'pending'},
+  {t:'leaf', label:'退休金', val:null, tag:'pending'},
+  {t:'blocked', label:'營業費用總計', missing:16},
 
-  {t:'grand', label:'營業利益（損失）', val:-219353},
+  {t:'blocked', label:'營業利益（損失）', level:'grand'},
 
   {t:'section', label:'營業外收益及費損'},
   {t:'leaf', label:'利息收入', val:null},
   {t:'leaf', label:'兌換盈益', val:null},
-  {t:'leaf', label:'利息支出', val:-903, tag:'est'},
+  {t:'leaf', label:'利息支出', val:null, tag:'pending'},
   {t:'leaf', label:'兌換損失', val:null},
-  {t:'subtotal', label:'營業外收益及費損總計', val:-903},
+  {t:'blocked', label:'營業外收益及費損總計', missing:1},
 
-  {t:'grand', label:'稅前淨利（虧損）總計', val:-220256},
+  {t:'blocked', label:'稅前淨利（虧損）總計', level:'grand'},
 
   {t:'section', label:'所得稅費用'},
   {t:'leaf', label:'所得稅費用（按季／年度估列，本表未含）', val:null},
 
-  {t:'grand', label:'本期淨利（損）', val:-220256},
+  {t:'blocked', label:'本期淨利（損）', level:'grand'},
 ];
 
 const tbody = document.getElementById('tbody');
@@ -296,15 +303,26 @@ tbody.innerHTML = ROWS.map(r => {
   if (r.t === 'section') {
     return `<tr class="section-head"><td class="item" colspan="4">${r.label}</td></tr>`;
   }
+  if (r.t === 'blocked') {
+    const missingNote = r.missing ? `<span class="missing-count">（缺${r.missing}項）</span>` : '';
+    const rowCls = r.level === 'grand' ? 'grand' : 'subtotal';
+    return `<tr class="${rowCls}">
+      <td class="item">${r.label}${missingNote}</td>
+      <td class="tagcol"></td>
+      <td class="val pendingtotal">待補齊</td>
+      <td class="pct"></td>
+    </tr>`;
+  }
   const cls = r.t === 'leaf' ? 'leaf' : (r.t === 'subtotal' ? 'subtotal' : 'grand');
   const empty = r.val === null || r.val === undefined;
   let valCls = empty ? 'val empty' : 'val';
   if (r.t === 'grand' && !empty) valCls += r.val < 0 ? ' neg' : ' pos';
+  const mark = r.partial ? '<span class="partial-mark">＊</span>' : '';
   return `<tr class="${cls}">
     <td class="item">${r.label}</td>
     <td class="tagcol">${empty ? '' : tagHtml(r.tag)}</td>
-    <td class="${valCls} num">${money(r.val)}</td>
+    <td class="${valCls} num">${money(r.val)}${mark}</td>
     <td class="pct num">${empty ? '' : pct(r.val)+'%'}</td>
   </tr>`;
-}).join('');
+}).join('') + `<tr><td colspan="4" class="asterisk-note">＊尚未扣除銷貨折讓（待提供），為暫定金額。</td></tr>`;
 </script>
