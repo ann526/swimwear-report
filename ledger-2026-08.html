@@ -1,0 +1,364 @@
+<title>8月科目明細表</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  :root {
+    --ink: #0f172a;
+    --ink2: #475569;
+    --ink3: #94a3b8;
+    --page: #f8f9fb;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --accent: #6366f1;
+    --accent-light: #eef2ff;
+    --good: #047857;
+    --bad: #b91c1c;
+    --header-bg: #0f172a;
+    --chip-bg: #f1f5f9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #f1f5f9;
+      --ink2: #b6c0cf;
+      --ink3: #7c8798;
+      --page: #0b1120;
+      --card: #141b2d;
+      --border: #26314a;
+      --accent: #818cf8;
+      --accent-light: #1e2140;
+      --good: #34d399;
+      --bad: #f87171;
+      --header-bg: #05070d;
+      --chip-bg: #1c2438;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #f1f5f9;
+    --ink2: #b6c0cf;
+    --ink3: #7c8798;
+    --page: #0b1120;
+    --card: #141b2d;
+    --border: #26314a;
+    --accent: #818cf8;
+    --accent-light: #1e2140;
+    --good: #34d399;
+    --bad: #f87171;
+    --header-bg: #05070d;
+    --chip-bg: #1c2438;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--ink);
+  }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .header {
+    background: var(--header-bg);
+    color: #f8fafc;
+    padding: 22px 24px calc(20px + env(safe-area-inset-top, 0px));
+    padding-top: calc(22px + env(safe-area-inset-top, 0px));
+  }
+  .eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: #94a3b8; margin-bottom: 6px;
+  }
+  .h-row { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  .h-title { font-size: 22px; font-weight: 800; letter-spacing: -0.4px; }
+  .h-period { font-size: 12.5px; color: #cbd5e1; font-weight: 500; }
+
+  .wrap { max-width: 820px; margin: 0 auto; padding: 20px 24px 48px; }
+  @media (max-width: 600px) { .wrap { padding: 16px 16px 40px; } .header { padding-left:16px; padding-right:16px; } }
+
+  .banner {
+    background: var(--accent-light); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 18px; font-size: 12.5px; line-height: 1.7; color: var(--ink2);
+  }
+  .banner b { color: var(--ink); font-weight: 700; }
+
+  .toc {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px;
+  }
+  .toc a {
+    font-size: 11.5px; font-weight: 600; color: var(--ink2); text-decoration: none;
+    background: var(--chip-bg); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border);
+  }
+  .toc a:hover { color: var(--accent); border-color: var(--accent); }
+
+  .acct-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    margin-bottom: 14px; overflow: hidden; scroll-margin-top: 12px;
+  }
+  .acct-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+    padding: 13px 16px; border-bottom: 1px solid var(--border); background: var(--accent-light);
+  }
+  .acct-name { font-size: 14px; font-weight: 800; }
+  .acct-total { font-size: 14px; font-weight: 800; }
+  .acct-total.neg { color: inherit; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  th, td { padding: 7px 16px; text-align: right; }
+  th:first-child, td:first-child { text-align: left; width: 62px; color: var(--ink3); }
+  th:nth-child(2), td:nth-child(2) { text-align: left; }
+  td:last-child, th:last-child { width: 74px; }
+  thead th {
+    font-size: 10px; color: var(--ink3); font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+    border-bottom: 1px solid var(--border); padding-top: 9px; padding-bottom: 7px;
+  }
+  tbody tr:not(:last-child) td { border-bottom: 1px solid var(--border); }
+  td.desc { color: var(--ink2); }
+  td.src { color: var(--ink3); font-size: 11px; }
+  .src-tag {
+    font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 4px;
+    background: var(--chip-bg); color: var(--ink3); white-space: nowrap;
+  }
+
+  .note {
+    font-size: 12px; color: var(--ink2); line-height: 1.75; margin-top: 18px;
+  }
+  .note b { color: var(--ink); }
+</style>
+
+<div class="header">
+  <div class="eyebrow">HAI Swimwear · 財務報表</div>
+  <div class="h-row">
+    <div class="h-title">科目明細表</div>
+    <div class="h-period">2026/08/01 – 2026/08/31 · 新台幣（NTD）</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="banner">
+    本表列出「8月損益表」每個會計科目底下的逐筆交易，方便核對來源。各科目小計應與損益表對應科目金額一致；
+    有底色差異的地方（例如金額只含部分通路）已在損益表本身標註過，這裡不重複說明。點選上方標籤可跳到該科目。
+  </div>
+
+  <div class="toc" id="toc"></div>
+  <div id="accounts"></div>
+
+  <div class="note">
+    <b>說明：</b>金額為新台幣；港幣項目已按匯率4、人民幣項目已按匯率5折算並在「摘要」註明原始外幣金額。
+    「銷貨收入」「銷貨成本」「銷貨折讓（外點抽成）」為通路損益表8月彙總數，非逐筆交易，故以通路為單位列示。
+  </div>
+
+</div>
+
+<script>
+const DATA = [
+  {acct:'銷貨收入', total:3215275, items:[
+    ['—','官網',1047095,'通路損益表'],
+    ['—','信義大遠百',783641,'通路損益表'],
+    ['—','新竹大遠百',206551,'通路損益表'],
+    ['—','台中大遠百',423003,'通路損益表'],
+    ['—','Harbour City（香港，匯率4）',314968,'通路損益表'],
+    ['—','高雄',47753,'通路損益表'],
+    ['—','恆春',53064,'通路損益表'],
+    ['—','小琉球',22780,'通路損益表'],
+    ['—','海南',316420,'通路損益表'],
+  ]},
+  {acct:'營業收入', total:4728, items:[
+    ['08/11','員工購物金-沈予新',30,'台灣員工薪資單'],
+    ['08/xx','員工購物金-洪心祈',510,'台灣員工薪資單'],
+    ['08/xx','員工購物金-洪欣妤',270,'台灣員工薪資單'],
+    ['08/xx','員工購物金-劉鈺芯',270,'台灣員工薪資單'],
+    ['08/xx','員工購物金-李芷彤（HKD90×4）',360,'香港員工薪資單'],
+    ['08/xx','員工購物金-陳詩祺（HKD34×4）',136,'香港員工薪資單'],
+    ['08/xx','員工購物金-盧天欣（HKD34×4）',136,'香港員工薪資單'],
+    ['08/xx','員工購物金-周夏愉（HKD34×4）',136,'香港員工薪資單'],
+    ['08/xx','員工購物金-梁綽恩（HKD30×4）',120,'香港員工薪資單'],
+    ['08/17','上海銷貨收入-轉帳來自Yilei（RMB552×5）',2760,'微信支付'],
+  ]},
+  {acct:'銷貨折讓', total:-366290, items:[
+    ['08月','大遠百信義-抽成差額（銷貨合計445,645－結帳338,689）',-106956,'遠百對帳單'],
+    ['08月','大遠百台中-抽成差額（220,595－167,653）',-52942,'遠百對帳單'],
+    ['08月','大遠百新竹-抽成差額（172,947－133,167）',-39780,'遠百對帳單'],
+    ['08月','外點-高雄抽成',-15092,'通路損益表'],
+    ['08月','外點-恆春抽成',-17238,'通路損益表'],
+    ['08月','外點-小琉球抽成',-7714,'通路損益表'],
+    ['08月','外點-海南抽成',-126568,'通路損益表'],
+  ]},
+  {acct:'銷貨成本', total:-512474, items:[
+    ['—','官網',-206426,'通路損益表'],
+    ['—','信義大遠百',-110719,'通路損益表'],
+    ['—','新竹大遠百',-27523,'通路損益表'],
+    ['—','台中大遠百',-61834,'通路損益表'],
+    ['—','Harbour City（香港）',-48061,'通路損益表'],
+    ['—','高雄',-6813,'通路損益表'],
+    ['—','恆春',-6683,'通路損益表'],
+    ['—','小琉球',-3266,'通路損益表'],
+    ['—','海南',-41149,'通路損益表'],
+  ]},
+  {acct:'其他成本（營業成本）', total:-308341, items:[
+    ['08月','增站-8月款',-167801,'支付明細表'],
+    ['08/25','甘芳穎-修溫泉款,Junior照片',-25200,'支付明細表'],
+    ['08/25','甘芳穎-修溫泉款,Junior照片',-25000,'支付明細表'],
+    ['08/25','甘芳穎-修溫泉款,Junior照片',-25000,'支付明細表'],
+    ['08/25','甘芳穎-亞馬遜修改費',-3640,'支付明細表'],
+    ['08/06','轉給梁書一（胸墊，RMB3,000×5）',-15000,'微信支付'],
+    ['08/08','轉給佛山胸墊訂製（RMB4,500×5）',-22500,'微信支付'],
+    ['08/07','轉給A環保降解包裝（RMB4,840×5）',-24200,'微信支付'],
+  ]},
+  {acct:'薪資支出-台灣', total:-408824, items:[
+    ['08月','簡匯安',-62077,'台灣員工薪資單'],
+    ['08月','李星蓉',-46024,'台灣員工薪資單'],
+    ['08月','段軍辰',-75215,'台灣員工薪資單'],
+    ['08月','沈予新',-17735,'台灣員工薪資單'],
+    ['08月','洪心祈',-23850,'台灣員工薪資單'],
+    ['08月','謝昱妤',0,'台灣員工薪資單'],
+    ['08月','楊景茨',-35666,'台灣員工薪資單'],
+    ['08月','林亞瑩',-45411,'台灣員工薪資單'],
+    ['08月','藍沁嫻',-27945,'台灣員工薪資單'],
+    ['08月','洪欣妤',-20911,'台灣員工薪資單'],
+    ['08月','劉鈺芯',-26516,'台灣員工薪資單'],
+    ['08月','陳語杉',-16302,'台灣員工薪資單'],
+    ['08/18','Heidi信義代班8/12',-490,'支付明細表'],
+    ['08/04','Heidi信義代班7/27-8/2',-3822,'支付明細表'],
+    ['08/25','Heidi信義代班8/17-8/23',-3626,'支付明細表'],
+    ['09/01','Heidi信義代班8/24-8/30',-3234,'支付明細表'],
+  ]},
+  {acct:'薪資支出-香港（匯率4）', total:-104668, items:[
+    ['08月','李芷彤/Toby（HKD3,120×4）',-12480,'香港員工薪資單'],
+    ['08月','陳詩祺/chole（HKD1,640×4）',-6560,'香港員工薪資單'],
+    ['08月','盧天欣/Kristine（HKD4,741×4）',-18964,'香港員工薪資單'],
+    ['08月','周夏愉/Siv（HKD2,555×4）',-10220,'香港員工薪資單'],
+    ['08月','梁綽恩/Macy（HKD11,655×4）',-46620,'香港員工薪資單'],
+    ['08月','林惠嫻/Amy（HKD1,546×4）',-6184,'香港員工薪資單'],
+    ['08月','唐露霖/Candy（HKD210×4）',-840,'香港員工薪資單'],
+    ['08月','彭婉盈/Ember（HKD350×4）',-1400,'香港員工薪資單'],
+    ['08月','覃芝華/Hana（HKD350×4）',-1400,'香港員工薪資單'],
+  ]},
+  {acct:'租金支出', total:-365673, items:[
+    ['08/01','Harbour City租金-恆生帳戶（HKD15,000×4）',-60000,'香港支付明細'],
+    ['08/01','Harbour City租金-美金帳戶（HKD74,039.56×4）',-296158,'香港支付明細'],
+    ['08/07','小倉庫（台灣倉庫租金）',-9515,'玉山活存交易明細'],
+  ]},
+  {acct:'旅費', total:-51330, items:[
+    ['09/01','林亞瑩-8月香港出差',-51330,'員工代墊明細'],
+  ]},
+  {acct:'運費', total:-46010, items:[
+    ['08/17','順豐-7月款',-24201,'支付明細表'],
+    ['08/06,08/06,08/15,08/20,08/24,08/28,08/28,08/30','Harbour City零用金SF Express×8（HKD4,064×4）',-16256,'零用金-海港城'],
+    ['08/03,08/11,08/13,08/14','信義零用金-拉拉運費/客人退運費',-3811,'零用金-信義'],
+    ['08/01,08/07,08/08(×4),08/11,08/15,08/17(×2),08/18','台中零用金-官網退運費/拉拉/黑貓/標籤運費',-1742,'零用金-台中'],
+  ]},
+  {acct:'郵電費', total:-4097, items:[
+    ['08/25','中華電信0933xxx37',-1400,'玉山信用卡'],
+    ['08/25','中華電信0910xxx37',-284,'玉山信用卡'],
+    ['08/25','中華電信0912xxx36',-599,'玉山信用卡'],
+    ['08/25','中華電信0963xxx52',-599,'玉山信用卡'],
+    ['08/25','中華電信0963xxx82',-599,'玉山信用卡'],
+    ['08/25','中華電信0910xxx51',-616,'玉山信用卡'],
+  ]},
+  {acct:'修繕費', total:-550, items:[
+    ['08/12','信義-遠百修改室修改維修件',-200,'零用金-信義'],
+    ['08/14','信義-遠百修改室修改維修件',-100,'零用金-信義'],
+    ['08/05','台中-洋裝維修',-200,'零用金-台中'],
+    ['08/13','台中-泳裝維修',-50,'零用金-台中'],
+  ]},
+  {acct:'廣告費', total:-201313, items:[
+    ['08/12～08/29','玉山信用卡Facebook廣告×19（含國外交易服務費）',-172847,'玉山信用卡'],
+    ['08/13,08/08','微信-小紅書×2（RMB4.97×5）',-25,'微信支付'],
+    ['08/14','玉山活存-廣告費差額轉帳',-28441,'玉山活存交易明細'],
+  ]},
+  {acct:'水電瓦斯費', total:-1120, items:[
+    ['08/29','Harbour City-Chole代繳電費（HKD280×4）',-1120,'零用金-海港城'],
+  ]},
+  {acct:'保險費-健保費', total:-31766, items:[
+    ['08月','健保局-8月健保費',-31766,'支付明細表'],
+  ]},
+  {acct:'保險費-勞保費', total:-39232, items:[
+    ['08月','勞保局-8月勞保費',-39232,'支付明細表'],
+  ]},
+  {acct:'研究費', total:-3400, items:[
+    ['08/11','轉給WGSN趨勢預測服務（RMB680×5）',-3400,'微信支付'],
+  ]},
+  {acct:'訓練費', total:-18648, items:[
+    ['08/25','vivi-台中教學費用',-6600,'支付明細表'],
+    ['08/xx','vivi-線上/台中授課（8月共）',-12048,'支付明細表'],
+  ]},
+  {acct:'其他費用', total:-291088, items:[
+    ['08/11','知通-7月款（歸屬8月）',-105000,'支付明細表'],
+    ['08/05','大遠百-業務扣款發票CR48701736',-120363,'遠百對帳單'],
+    ['08月','大遠百-扣款明細（收銀機/廣告補助/刷卡手續費/電費/公管費等）',-64475,'遠百對帳單'],
+    ['08/04','轉給穎彩發哥（布料廠，RMB250×5）',-1250,'微信支付'],
+  ]},
+  {acct:'雜項購置', total:-1870, items:[
+    ['08/27','Harbour City-排插（HKD308×4）',-1232,'零用金-海港城'],
+    ['08/26','信義-海港城廣告牌',-638,'零用金-信義'],
+  ]},
+  {acct:'手續費', total:-4240, items:[
+    ['08月','支付明細表19筆匯款手續費（送審日期8月）合計',-4240,'支付明細表'],
+  ]},
+  {acct:'交通費', total:-8972, items:[
+    ['09/01','Daphne代墊-Viivi 9/1-9/5機票',-6692,'支付明細表'],
+    ['08/20','台中-7/10颱風假乘車(上班)Amy楊景茨',-360,'零用金-台中'],
+    ['08/20','台中-7/10颱風假乘車(上班)Yuni沈予新',-799,'零用金-台中'],
+    ['08/20','台中-7/10颱風假乘車(下班)Amy楊景茨',-345,'零用金-台中'],
+    ['08/20','台中-7/10颱風假乘車(下班)Yuni沈予新',-776,'零用金-台中'],
+  ]},
+  {acct:'軟體使用費', total:-8577, items:[
+    ['08/12','PayPal-Adobe',-831,'玉山信用卡'],
+    ['08/14','PayPal-Squarespace',-703,'玉山信用卡'],
+    ['08/16','Apple.com/Bill',-294,'玉山信用卡'],
+    ['08/18','利害短網址有限公司',-699,'玉山信用卡'],
+    ['08/22','Notion',-5706,'玉山信用卡'],
+    ['08/29','Apple.com/Bill',-253,'玉山信用卡'],
+    ['08/30','Apple.com/Bill',-91,'玉山信用卡'],
+  ]},
+  {acct:'雜費', total:-5188, items:[
+    ['08月','段軍辰-代墊費（明細未載說明）',-504,'台灣員工薪資單'],
+    ['08/01,08/09,08/27,08/30','Harbour City-紙巾/鎖匙費/濕紙巾/垃圾袋（HKD712×4）',-2848,'零用金-海港城'],
+    ['08/11,08/20,08/26','信義-濕紙巾/擦塵紙/塑膠夾',-1786,'零用金-信義'],
+    ['08/19','微信-查看報告（RMB9.90×5）',-50,'微信支付'],
+  ]},
+  {acct:'退休金', total:-17410, items:[
+    ['08月','勞保局-8月退休金',-17410,'支付明細表'],
+  ]},
+  {acct:'利息支出', total:-723, items:[
+    ['08/24','貸款利息（帳號146479218）',-181,'玉山活存交易明細'],
+    ['08/24','貸款利息（帳號153906294）',-542,'玉山活存交易明細'],
+  ]},
+];
+
+function money(n){ if(n===0) return '$0'; return (n<0?'-$':'$') + Math.round(Math.abs(n)).toLocaleString('en-US'); }
+
+const tocEl = document.getElementById('toc');
+const accEl = document.getElementById('accounts');
+
+DATA.forEach((group, i) => {
+  const id = 'acct-' + i;
+  const a = document.createElement('a');
+  a.href = '#' + id;
+  a.textContent = group.acct;
+  tocEl.appendChild(a);
+
+  const card = document.createElement('div');
+  card.className = 'acct-card';
+  card.id = id;
+
+  const totalCls = group.total < 0 ? 'neg' : '';
+  const rows = group.items.map(([date, desc, amt, src]) => `
+    <tr>
+      <td class="num">${date}</td>
+      <td class="desc">${desc}</td>
+      <td class="num">${money(amt)}</td>
+      <td class="src"><span class="src-tag">${src}</span></td>
+    </tr>`).join('');
+
+  card.innerHTML = `
+    <div class="acct-head">
+      <div class="acct-name">${group.acct}</div>
+      <div class="acct-total num ${totalCls}">${money(group.total)}</div>
+    </div>
+    <table>
+      <thead><tr><th>日期</th><th>摘要</th><th>金額</th><th>來源</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  accEl.appendChild(card);
+});
+</script>
