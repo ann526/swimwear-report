@@ -1,0 +1,14 @@
+{
+ "reported_60d": [
+  "41506@2026/9/10",
+  "41507@2026/9/10",
+  "41509@2026/9/10",
+  "41510@2026/9/10",
+  "41511@2026/9/10",
+  "71303@2026/9/10"
+ ],
+ "artifact_url": "https://claude.ai/artifact/USWkeXXvHYxrtTtkaQH1rm",
+ "last_cutoff": "2026-11-10",
+ "dashboard_url": "https://claude.ai/artifact/TR3KFb6qYLUYgRuBLhDdFY",
+ "report_file": "/home/user/swimwear-report/state/out/report.html"
+}

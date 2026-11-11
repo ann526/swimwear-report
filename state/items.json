@@ -1,0 +1,183 @@
+{
+ "note": "追蹤品項設定。launch = 官網實際開賣日(算上架天數/評估階段);continuing = 多波上市的常態款(不出60天報告)。配件(Belt/Halo)不追蹤。",
+ "items": [
+  {
+   "code": "41501",
+   "po": "LU-072926",
+   "pre": "2024-07-19",
+   "bulk": "2026-09-23",
+   "launch": "2026-09-17",
+   "continuing": true
+  },
+  {
+   "code": "41503",
+   "po": "LU-072926",
+   "pre": "2026-04-02",
+   "bulk": "2026-09-23",
+   "launch": "2026-09-17",
+   "continuing": true
+  },
+  {
+   "code": "41504",
+   "po": "LU-072926",
+   "pre": "2024-07-19",
+   "bulk": "2026-09-23",
+   "launch": "2026-09-17",
+   "continuing": true
+  },
+  {
+   "code": "41506",
+   "po": "LU-072926",
+   "pre": "2026-09-04",
+   "bulk": "2026-09-23",
+   "launch": "2026-09-10",
+   "continuing": false
+  },
+  {
+   "code": "41507",
+   "po": "LU-072926",
+   "pre": "2026-09-04",
+   "bulk": "2026-09-23",
+   "launch": "2026-09-10",
+   "continuing": false
+  },
+  {
+   "code": "41509",
+   "po": "LU-072926",
+   "pre": "2026-09-04",
+   "bulk": "2026-09-23",
+   "launch": "2026-09-10",
+   "continuing": false
+  },
+  {
+   "code": "41510",
+   "po": "LU-072926",
+   "pre": "2026-09-04",
+   "bulk": "2026-09-23",
+   "launch": "2026-09-10",
+   "continuing": false
+  },
+  {
+   "code": "41511",
+   "po": "LU-072926",
+   "pre": "2026-09-04",
+   "bulk": "2026-09-23",
+   "launch": "2026-09-10",
+   "continuing": false
+  },
+  {
+   "code": "41307",
+   "po": "LU-072926, LU-090326(共用配件代碼)",
+   "pre": "2023-12-20",
+   "bulk": "2026-09-23",
+   "launch": "2025-07-19",
+   "continuing": true
+  },
+  {
+   "code": "61115",
+   "po": "LU-090326",
+   "pre": "2026-03-31",
+   "bulk": "",
+   "launch": "2026-04-01",
+   "continuing": true
+  },
+  {
+   "code": "71106",
+   "po": "LU-090326",
+   "pre": "2026-09-30",
+   "bulk": "",
+   "launch": "2026-10-19",
+   "continuing": false
+  },
+  {
+   "code": "71108",
+   "po": "LU-090326",
+   "pre": "2026-09-10",
+   "bulk": "",
+   "launch": "2026-10-14",
+   "continuing": false
+  },
+  {
+   "code": "71203",
+   "po": "LU-090326",
+   "pre": "2026-09-04",
+   "bulk": "",
+   "launch": "2026-09-30",
+   "continuing": false
+  },
+  {
+   "code": "73501",
+   "po": "LU-090326(官網尚未建立商品)",
+   "pre": "",
+   "bulk": "",
+   "launch": "",
+   "continuing": false,
+   "placeholder": true
+  },
+  {
+   "code": "71303",
+   "po": "待確認(Dual Frame系列)",
+   "pre": "2026-09-10",
+   "bulk": "",
+   "launch": "2026-09-10",
+   "continuing": false
+  }
+ ],
+ "ignore_prefixes": [
+  "41502",
+  "Belt"
+ ],
+ "stores": [
+  "信義大遠百",
+  "台中大遠百",
+  "新竹大遠百",
+  "Harbour City"
+ ],
+ "warehouse": "增站新屋三站",
+ "preorder": [
+  {
+   "label": "71106",
+   "launch": "2026-09-30",
+   "skus": [
+    "71106"
+   ]
+  },
+  {
+   "label": "71108",
+   "launch": "2026-09-10",
+   "skus": [
+    "71108"
+   ]
+  },
+  {
+   "label": "71203",
+   "launch": "2026-09-04",
+   "skus": [
+    "71203"
+   ]
+  },
+  {
+   "label": "71303",
+   "launch": "2026-09-10",
+   "skus": [
+    "71303"
+   ]
+  },
+  {
+   "label": "41307GW/OB(泳帽新色)",
+   "launch": "2026-09-22",
+   "skus": [
+    "41307GWF",
+    "41307OBF"
+   ]
+  },
+  {
+   "label": "61115(Baby Blue新色, SKU 61115BB*)",
+   "launch": "2026-10-29",
+   "skus": [
+    "61115BB"
+   ]
+  }
+ ],
+ "preorder_note": "預購品清單。每日用 graphql orders 查詢(created_at 到截止日, sku 篩選)抓訂單,取消狀態以查詢當下為準。"
+}
