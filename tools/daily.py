@@ -1,17 +1,25 @@
 #!/usr/bin/env python3
 """每日熱銷品報表更新工具。
 
-用法(cutoff = 資料截止日,通常是台灣時間昨天):
-  python3 tools/daily.py queries --cutoff 2026-11-10   # 印出要跑的 Shopify 查詢
-  python3 tools/daily.py build   --cutoff 2026-11-10   # 從對話紀錄抓查詢結果,算出要寫進試算表的值
-  python3 tools/daily.py render  --cutoff 2026-11-10 --sheet <sheet.json>   # 用試算表讀回的值產生每日報表 HTML
+用法(cutoff = 資料截止日,通常是台灣時間昨天;不給 --cutoff 就自動用台灣時間昨天):
+  python3 tools/daily.py today                 # 印出今天要用的資料截止日
+  python3 tools/daily.py queries               # 印出要跑的 Shopify 查詢(ShopifyQL x6、GraphQL 訂單、補庫存商品)
+  python3 tools/daily.py check                 # 檢查試算表欄位標題、官網有沒有新泳裝品號
+  python3 tools/daily.py build                 # 從查詢結果算出要寫進試算表的值
+  python3 tools/daily.py payload               # 印出要寫進試算表的每一段 range + values
+  python3 tools/daily.py render                # 用試算表讀回的值產生每日報表 HTML
+  python3 tools/daily.py finish                # 記錄已出過的 60 天報告、更新 last_cutoff
 
-查詢結果的來源:Claude Code 對話紀錄(~/.claude/projects/*/*.jsonl)與大型結果檔(tool-results/*.txt)。
+查詢結果的來源(依序都會讀):
+  1. state/in/*.json:手動或其他工具存下來的查詢結果(每個檔一個 JSON 結果)
+  2. Claude Code 對話紀錄(~/.claude/projects/*/*.jsonl)與大型結果檔(tool-results/*.txt)
+環境設定(試算表 ID、artifact 連結等)在 state/config.json。
 """
 import argparse, collections, datetime as dt, glob, html, json, math, os, re, statistics, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CFG = json.load(open(os.path.join(ROOT, 'state', 'items.json')))
+CONF = json.load(open(os.path.join(ROOT, 'state', 'config.json')))
 OUT = os.path.join(ROOT, 'state', 'out')
 PREFIXES = "product_variant_sku STARTS WITH '415' OR product_variant_sku STARTS WITH '41307' OR product_variant_sku STARTS WITH '61115' OR product_variant_sku STARTS WITH '71'"
 D = dt.date
@@ -45,6 +53,8 @@ def queries(cut):
 
 # ---------- reading tool results ----------
 def _texts():
+    for f in sorted(glob.glob(os.path.join(ROOT, 'state', 'in', '*.json')), key=os.path.getmtime):
+        yield open(f, errors='ignore').read()
     for f in sorted(glob.glob(os.path.expanduser('~/.claude/projects/*/*.jsonl')), key=os.path.getmtime):
         for line in open(f, errors='ignore'):
             try: e = json.loads(line)
@@ -64,7 +74,9 @@ def load_results():
     for t in _texts():
         try: d = json.loads(t)
         except Exception: continue
-        if isinstance(d, dict) and 'query' in d and 'rows' in d:
+        if isinstance(d, dict) and 'inventoryItems' in d:
+            invlevels.append(d)
+        elif isinstance(d, dict) and 'query' in d and 'rows' in d:
             ql[d['query']] = d['rows']
         elif isinstance(d, dict) and isinstance(d.get('data'), dict):
             gql.append(d['data'])
@@ -76,6 +88,7 @@ def load_results():
 
 
 sheets = []
+invlevels = []  # get-inventory-levels 結果(補 inventory_by_location 漏掉的 SKU)
 
 
 def sheet_launch_dates():
@@ -162,6 +175,16 @@ def build(cut):
     ov = json.load(open(ov_path)) if os.path.exists(ov_path) else {}
     for sku, u in ov.get(cut.isoformat(), {}).items():
         stock[code_of(sku)] += int(u) - stock_sku.get(sku, 0); stock_sku[sku] = int(u); inv_skus.add(sku)
+    # 自動補:用最近一次 get-inventory-levels 的 onHand(只算 5 倉)
+    lv = {}
+    for d in invlevels:
+        for it in d['inventoryItems']:
+            lv.setdefault(it['sku'], {})[it['locationName']] = int(it.get('onHand', it.get('available', 0)) or 0)
+    for sku in list(missing_inv):
+        if sku in lv and sku not in ov.get(cut.isoformat(), {}):
+            u = sum(n for loc, n in lv[sku].items() if loc in locs)
+            stock[code_of(sku)] += u - stock_sku.get(sku, 0); stock_sku[sku] = u; inv_skus.add(sku)
+            print(f'庫存補值(get-inventory-levels):{sku} = {u}')
     missing_inv = [s for s in missing_inv if s not in inv_skus]
 
     def instock(rows, extra=()):
@@ -269,17 +292,161 @@ def build(cut):
         if c in rows: print(c, rows[c])
 
 
+# ---------- helpers for the daily run ----------
+def yesterday_tw():
+    try:
+        from zoneinfo import ZoneInfo
+        now = dt.datetime.now(ZoneInfo(CONF.get('timezone', 'Asia/Taipei')))
+    except Exception:
+        now = dt.datetime.utcnow() + dt.timedelta(hours=8)
+    return now.date() - dt.timedelta(1)
+
+
+def orders_query(cut):
+    terms = []
+    for p in CFG.get('preorder', []):
+        for k in p['skus']:
+            terms.append(f'sku:{k}' if len(k) >= 8 else f'sku:{k}*')
+    q = ('query($q:String!,$after:String){ orders(first:100, after:$after, query:$q){ pageInfo{hasNextPage endCursor} '
+         'nodes{ name createdAt cancelledAt lineItems(first:30){ nodes{ sku quantity } } } } }')
+    v = {'q': f"created_at:>={CONF.get('preorder_since', '2026-09-01')} created_at:<={cut.isoformat()}T23:59:59+08:00 ({' OR '.join(terms)})"}
+    return q, v
+
+
+def latest_main_sheet():
+    head = CONF['main_headers'][:3]
+    for d in reversed(sheets):
+        v = d.get('values') or []
+        if v and v[0][:3] == head:
+            return v
+    return None
+
+
+def check():
+    """步驟 1–2 的自動檢查:欄位標題、官網新品。回傳 0 = 可以繼續寫入。"""
+    _, gql = load_results()
+    ok = True
+    v = latest_main_sheet()
+    if v is None:
+        print('✗ 找不到讀回的主表,請先 get_values ' + f"'{CONF['sheets']['main']}'!{CONF['main_read_range']}"); return 1
+    if v[0] != CONF['main_headers']:
+        ok = False
+        exp, got = CONF['main_headers'], v[0]
+        for i in range(max(len(exp), len(got))):
+            a = exp[i] if i < len(exp) else '(無)'; b = got[i] if i < len(got) else '(無)'
+            if a != b: print(f'✗ 欄位標題不同:第 {i + 1} 欄 應為「{a}」實際「{b}」')
+    else:
+        print('✓ 欄位標題正確')
+    known = {i['code'] for i in CFG['items']} | {p for p in CFG['ignore_prefixes']}
+    prods = next((g['products']['edges'] for g in reversed(gql) if isinstance(g.get('products'), dict) and 'edges' in g['products']), None)
+    if prods is None:
+        print('… 沒看到 search_products 結果,略過新品檢查')
+    else:
+        new = {}
+        for e in prods:
+            n = e.get('node', {})
+            if (n.get('status') or 'ACTIVE') != 'ACTIVE': continue
+            if (n.get('productType') or '') in ('Accessories',) or 'Halo' in (n.get('title') or ''): continue
+            for ve in (n.get('variants') or {}).get('edges', []):
+                sku = (ve.get('node') or {}).get('sku') or ''
+                c = sku[:5]
+                if re.fullmatch(r'\d{5}', c) and c not in known and not any(sku.startswith(p) for p in CFG['ignore_prefixes']):
+                    new.setdefault(c, n.get('title'))
+        if new:
+            for c, t in new.items(): print(f'＋ 官網新泳裝品號:{c}({t})→ 依 SKILL 步驟 2 加進試算表與 state/items.json')
+        else:
+            print('✓ 官網沒有新泳裝品號')
+    return 0 if ok else 1
+
+
+def _contig(changed):
+    """把變動列號合併成連續區段(間隔 ≤ 3 列就併在一起,減少寫入次數)。"""
+    out = []
+    for r in changed:
+        if out and r - out[-1][1] <= 4: out[-1][1] = r
+        else: out.append([r, r])
+    return out
+
+
+def payload(full=False):
+    b = json.load(open(os.path.join(OUT, 'build.json')))
+    blocks = json.load(open(os.path.join(OUT, 'sheet_blocks.json')))
+    cut = D.fromisoformat(b['cutoff'])
+    n = len(b['rows']); last = 2 + n
+    S = CONF['sheets']
+    w = []
+    cols = {'E:G': ('E', 'G'), 'J': ('J', 'J'), 'O:Q': ('O', 'Q'), 'Y': ('Y', 'Y'), 'AB': ('AB', 'AB')}
+    for k, (a, z) in cols.items():
+        w.append({'range': f"'{S['main']}'!{a}3:{z}{last}", 'values': blocks[k]})
+    w.append({'range': f"'{S['main']}'!B{last + 2}", 'values': [[f'{cut.year}/{cut.month}/{cut.day}']]})
+    t3 = b['tab3']
+    w.append({'range': f"'{S['preorder']}'!A2:H{len(t3)}", 'values': t3[1:]})
+    t2 = b['tab2']
+    base_p = os.path.join(OUT, 'tab2_written.json')
+    base = None if full or not os.path.exists(base_p) else json.load(open(base_p))
+    if base is None or len(base) != len(t2):
+        w.append({'range': f"'{S['colorsize']}'!A2:I{len(t2)}", 'values': t2[1:]})
+        if base is not None and len(base) > len(t2):
+            w.append({'range': f"'{S['colorsize']}'!A{len(t2) + 1}:I{len(base)}", 'values': [[''] * 9 for _ in range(len(base) - len(t2))]})
+    else:
+        changed = [i + 1 for i in range(1, len(t2)) if t2[i] != base[i]]
+        for a, z in _contig(changed):
+            w.append({'range': f"'{S['colorsize']}'!A{a}:I{z}", 'values': t2[a - 1:z]})
+    json.dump(w, open(os.path.join(OUT, 'writes.json'), 'w'), ensure_ascii=False)
+    print(f"# 試算表 {CONF['spreadsheet_id']}:依序用 update_values 寫入下列 {len(w)} 段(state/out/writes.json)")
+    for x in w:
+        print(json.dumps(x, ensure_ascii=False, separators=(',', ':')))
+
+
+def finish():
+    meta = json.load(open(os.path.join(OUT, 'report_meta.json')))
+    b = json.load(open(os.path.join(OUT, 'build.json')))
+    sp = os.path.join(ROOT, 'state', 'state.json')
+    st = json.load(open(sp)) if os.path.exists(sp) else {}
+    rep = st.setdefault('reported_60d', [])
+    for k in meta.get('sixty', []):
+        if k not in rep: rep.append(k)
+    st['last_cutoff'] = b['cutoff']
+    if CONF.get('artifact_url'): st['artifact_url'] = CONF['artifact_url']
+    json.dump(st, open(sp, 'w'), ensure_ascii=False, indent=2)
+    json.dump(b['tab2'], open(os.path.join(OUT, 'tab2_written.json'), 'w'), ensure_ascii=False)
+    asof = meta['asof']; url = CONF.get('artifact_url') or '(artifact 連結)'
+    alerts = []
+    if meta['restock_full']: alerts.append('整款補貨:' + '、'.join(meta['restock_full']))
+    if meta['restock_cut']: alerts.append('補斷碼熱賣色:' + '、'.join(meta['restock_cut']))
+    if meta['sixty']: alerts.append('滿60天:' + '、'.join(f"{k.split('@')[0]}({meta['sixty_verdicts'].get(k.split('@')[0], '')})" for k in meta['sixty']))
+    print(json.dumps({'alert': bool(alerts), 'push': ('⚠ ' + '|'.join(alerts)) if alerts else None,
+                      'reply': (('⚠ ' + '|'.join(alerts) + '\n') if alerts else f'{asof} 報表已更新,今天沒有補貨提醒:') + url},
+                     ensure_ascii=False, indent=1))
+
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('cmd', choices=['queries', 'build', 'render'])
-    ap.add_argument('--cutoff', required=True)
+    ap.add_argument('cmd', choices=['today', 'queries', 'check', 'build', 'payload', 'render', 'finish'])
+    ap.add_argument('--cutoff', help='資料截止日 YYYY-MM-DD,預設 = 台灣時間昨天')
+    ap.add_argument('--full', action='store_true', help='payload:顏色尺寸分頁整張重寫')
     ap.add_argument('--sheet')
     a = ap.parse_args()
-    cut = D.fromisoformat(a.cutoff)
-    if a.cmd == 'queries':
-        for k, q in queries(cut).items(): print(f'[{k}]\n{q}\n')
+    cut = D.fromisoformat(a.cutoff) if a.cutoff else yesterday_tw()
+    if a.cmd == 'today':
+        print(cut.isoformat())
+    elif a.cmd == 'queries':
+        print(f'# 資料截止日 {cut}\n')
+        for k, q in queries(cut).items(): print(f'[{k}]  run-analytics-query\n{q}\n')
+        q, v = orders_query(cut)
+        print('[orders]  graphql_query(first:100,有下一頁就帶 after 翻頁)\n' + q + '\nvariables: ' + json.dumps(v, ensure_ascii=False) + '\n')
+        for p in CONF.get('inventory_patch_products', []):
+            print(f"[inventory]  get-inventory-levels productId={p['product_gid']}  ({', '.join(p['skus'])})\n")
+        print(f"[sheet]  get_values spreadsheetId={CONF['spreadsheet_id']} range='{CONF['sheets']['main']}'!{CONF['main_read_range']}")
+        print("[products]  search_products search_query=\"status:active created_at:>'" + (cut - dt.timedelta(3)).isoformat() + "'\" sort_key=CREATED_AT reverse=true first=50")
+    elif a.cmd == 'check':
+        sys.exit(check())
     elif a.cmd == 'build':
         build(cut)
+    elif a.cmd == 'payload':
+        payload(a.full)
+    elif a.cmd == 'finish':
+        finish()
     else:
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         import render

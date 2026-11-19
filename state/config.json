@@ -1,0 +1,57 @@
+{
+ "note": "每日補貨快報的環境設定。換帳號時只改這個檔(artifact_url 留空 = 第一次執行時建立新的 artifact,建好後把連結填回來)。",
+ "store_domain": "hai-swimwear.myshopify.com",
+ "timezone": "Asia/Taipei",
+ "spreadsheet_id": "1IecIBUOHrdIcn50b-VPZ8RKGTfY4U_yRDJ5wcHS9Ki4",
+ "sheets": {
+  "main": "SKU動銷分析(新版)",
+  "colorsize": "顏色尺寸斷碼分析",
+  "preorder": "預購訂單追蹤"
+ },
+ "main_read_range": "A1:AB19",
+ "main_headers": [
+  "PO單號",
+  "品項數字",
+  "預購上架日期",
+  "大貨上架日期",
+  "現有庫存(5倉合計)",
+  "近30天銷量",
+  "近7天銷量",
+  "近30天日均(未滿30天以上架天數計)",
+  "近7天日均(未滿7天以上架天數計)",
+  "近30天銷售額",
+  "銷售貢獻度",
+  "ABC分級",
+  "累積售罄率",
+  "近30天售罄率(30天銷量÷(30天銷量+現有庫存))",
+  "近30天有貨率(有庫存天數÷天數,整色停售不計)",
+  "折扣率(近30天折扣÷原價銷售額)",
+  "自身成長率(後段÷前段日均,已扣全店季節變化與缺貨)",
+  "庫存周轉天數(DOC)",
+  "動銷矩陣象限",
+  "動能",
+  "建議動作",
+  "上架天數(自預購上架日期C欄起算到資料截止日)",
+  "評估階段(上架60天內完成評估)",
+  "綜合評估",
+  "日銷量變異係數(CV)",
+  "Z值(依ABC分級)",
+  "ROP(再訂購點,需求=日均÷有貨率)",
+  "累積銷售量(自最早上市日起至資料截止日)"
+ ],
+ "artifact_url": "https://claude.ai/artifact/USWkeXXvHYxrtTtkaQH1rm",
+ "artifact_title": "每日補貨快報",
+ "git_branch": "claude/dreamy-sagan-w5rtdd",
+ "inventory_patch_products": [
+  {
+   "note": "61115 Navy 的 NV1/NV2/NV4 不會出現在 inventory_by_location 報表,改用 get-inventory-levels 補",
+   "product_gid": "gid://shopify/Product/10567110492438",
+   "skus": [
+    "61115NV1",
+    "61115NV2",
+    "61115NV4"
+   ]
+  }
+ ],
+ "preorder_since": "2026-09-01"
+}
