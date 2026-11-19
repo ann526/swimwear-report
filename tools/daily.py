@@ -17,10 +17,27 @@
 """
 import argparse, collections, datetime as dt, glob, html, json, math, os, re, statistics, sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CFG = json.load(open(os.path.join(ROOT, 'state', 'items.json')))
-CONF = json.load(open(os.path.join(ROOT, 'state', 'config.json')))
-OUT = os.path.join(ROOT, 'state', 'out')
+PKG = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # repo 根目錄,或 skill 資料夾
+
+
+def _work_dir():
+    """資料夾:HAI_WORK 環境變數 > repo(有 state/items.json)> ~/hai-report(skill 安裝版)。"""
+    if os.environ.get('HAI_WORK'): return os.environ['HAI_WORK']
+    if os.path.exists(os.path.join(PKG, 'state', 'items.json')): return PKG
+    return os.path.expanduser('~/hai-report')
+
+
+ROOT = _work_dir()
+STATE = os.path.join(ROOT, 'state')
+OUT = os.path.join(STATE, 'out')
+os.makedirs(OUT, exist_ok=True)
+for _n in ('config.json', 'items.json', 'state.json'):   # 第一次用 skill 內附的預設值
+    _p, _d = os.path.join(STATE, _n), os.path.join(PKG, 'defaults', _n)
+    if not os.path.exists(_p) and os.path.exists(_d):
+        open(_p, 'w').write(open(_d).read())
+CFG = json.load(open(os.path.join(STATE, 'items.json')))
+CONF = json.load(open(os.path.join(STATE, 'config.json')))
+SETTINGS_KEYS = ('config', 'items', 'state')
 PREFIXES = "product_variant_sku STARTS WITH '415' OR product_variant_sku STARTS WITH '41307' OR product_variant_sku STARTS WITH '61115' OR product_variant_sku STARTS WITH '71'"
 D = dt.date
 
@@ -53,7 +70,7 @@ def queries(cut):
 
 # ---------- reading tool results ----------
 def _texts():
-    for f in sorted(glob.glob(os.path.join(ROOT, 'state', 'in', '*.json')), key=os.path.getmtime):
+    for f in sorted(glob.glob(os.path.join(STATE, 'in', '*.json')), key=os.path.getmtime):
         yield open(f, errors='ignore').read()
     for f in sorted(glob.glob(os.path.expanduser('~/.claude/projects/*/*.jsonl')), key=os.path.getmtime):
         for line in open(f, errors='ignore'):
@@ -146,7 +163,7 @@ def build(cut):
         if it['code'] in sl and sl[it['code']] != it['launch']:
             print(f"開賣日以試算表 C 欄為準: {it['code']} {it['launch']} -> {sl[it['code']]}")
             it['launch'] = sl[it['code']]
-    json.dump(CFG, open(os.path.join(ROOT, 'state', 'items.json'), 'w'), ensure_ascii=False, indent=1)
+    json.dump(CFG, open(os.path.join(STATE, 'items.json'), 'w'), ensure_ascii=False, indent=1)
     w = windows(cut)
     d30, d7, dp = set(days(*w['w30'])), set(days(*w['w7'])), set(days(*w['p30']))
     daily = collections.defaultdict(collections.Counter)
@@ -171,7 +188,7 @@ def build(cut):
             stock[code_of(sku)] += int(u); stock_sku[sku] += int(u)
     missing_inv = sorted(s for s in sku_seen if s not in inv_skus and cum_sku.get(s, 0) > 0)
     # manual inventory overrides (state/inv_override.json: {sku: units}) for SKUs the location report omits
-    ov_path = os.path.join(ROOT, 'state', 'inv_override.json')
+    ov_path = os.path.join(STATE, 'inv_override.json')
     ov = json.load(open(ov_path)) if os.path.exists(ov_path) else {}
     for sku, u in ov.get(cut.isoformat(), {}).items():
         stock[code_of(sku)] += int(u) - stock_sku.get(sku, 0); stock_sku[sku] = int(u); inv_skus.add(sku)
@@ -398,10 +415,38 @@ def payload(full=False):
         print(json.dumps(x, ensure_ascii=False, separators=(',', ':')))
 
 
+def settings_tab():
+    return CONF.get('settings_tab', '_快報設定')
+
+
+def restore():
+    """從試算表的設定分頁(get_values 讀回)還原 config/items/state 到本機。"""
+    load_results()
+    tab = settings_tab()
+    for d in reversed(sheets):
+        if tab in d.get('range', ''):
+            got = []
+            for r in d.get('values') or []:
+                if len(r) >= 2 and r[0] in SETTINGS_KEYS and r[1].strip().startswith('{'):
+                    json.loads(r[1])
+                    open(os.path.join(STATE, r[0] + '.json'), 'w').write(r[1]); got.append(r[0])
+            print(f'✓ 已從「{tab}」還原:' + '、'.join(got) + f'  → {STATE}')
+            return 0
+    print(f'… 沒讀到「{tab}」分頁,沿用本機/預設設定({STATE})')
+    return 0
+
+
+def settings_write():
+    rows = []
+    for k in SETTINGS_KEYS:
+        rows.append([k, json.dumps(json.load(open(os.path.join(STATE, k + '.json'))), ensure_ascii=False, separators=(',', ':'))])
+    return {'range': f"'{settings_tab()}'!A1:B{len(rows)}", 'values': rows}
+
+
 def finish():
     meta = json.load(open(os.path.join(OUT, 'report_meta.json')))
     b = json.load(open(os.path.join(OUT, 'build.json')))
-    sp = os.path.join(ROOT, 'state', 'state.json')
+    sp = os.path.join(STATE, 'state.json')
     st = json.load(open(sp)) if os.path.exists(sp) else {}
     rep = st.setdefault('reported_60d', [])
     for k in meta.get('sixty', []):
@@ -410,6 +455,8 @@ def finish():
     if CONF.get('artifact_url'): st['artifact_url'] = CONF['artifact_url']
     json.dump(st, open(sp, 'w'), ensure_ascii=False, indent=2)
     json.dump(b['tab2'], open(os.path.join(OUT, 'tab2_written.json'), 'w'), ensure_ascii=False)
+    print('# 把設定與狀態存回試算表(update_values):')
+    print(json.dumps(settings_write(), ensure_ascii=False, separators=(',', ':')))
     asof = meta['asof']; url = CONF.get('artifact_url') or '(artifact 連結)'
     alerts = []
     if meta['restock_full']: alerts.append('整款補貨:' + '、'.join(meta['restock_full']))
@@ -422,7 +469,7 @@ def finish():
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('cmd', choices=['today', 'queries', 'check', 'build', 'payload', 'render', 'finish'])
+    ap.add_argument('cmd', choices=['today', 'restore', 'queries', 'check', 'build', 'payload', 'render', 'finish', 'settings'])
     ap.add_argument('--cutoff', help='資料截止日 YYYY-MM-DD,預設 = 台灣時間昨天')
     ap.add_argument('--full', action='store_true', help='payload:顏色尺寸分頁整張重寫')
     ap.add_argument('--sheet')
@@ -430,6 +477,10 @@ if __name__ == '__main__':
     cut = D.fromisoformat(a.cutoff) if a.cutoff else yesterday_tw()
     if a.cmd == 'today':
         print(cut.isoformat())
+    elif a.cmd == 'restore':
+        sys.exit(restore())
+    elif a.cmd == 'settings':
+        print(json.dumps(settings_write(), ensure_ascii=False, separators=(',', ':')))
     elif a.cmd == 'queries':
         print(f'# 資料截止日 {cut}\n')
         for k, q in queries(cut).items(): print(f'[{k}]  run-analytics-query\n{q}\n')

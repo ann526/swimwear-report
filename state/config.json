@@ -1,5 +1,5 @@
 {
- "note": "每日補貨快報的環境設定。換帳號時只改這個檔(artifact_url 留空 = 第一次執行時建立新的 artifact,建好後把連結填回來)。",
+ "note": "每日補貨快報的環境設定。換帳號時把 artifact_url 改成空字串,第一次執行會建立新的 artifact 並寫回這裡。",
  "store_domain": "hai-swimwear.myshopify.com",
  "timezone": "Asia/Taipei",
  "spreadsheet_id": "1IecIBUOHrdIcn50b-VPZ8RKGTfY4U_yRDJ5wcHS9Ki4",
@@ -41,7 +41,6 @@
  ],
  "artifact_url": "https://claude.ai/artifact/USWkeXXvHYxrtTtkaQH1rm",
  "artifact_title": "每日補貨快報",
- "git_branch": "claude/dreamy-sagan-w5rtdd",
  "inventory_patch_products": [
   {
    "note": "61115 Navy 的 NV1/NV2/NV4 不會出現在 inventory_by_location 報表,改用 get-inventory-levels 補",
@@ -53,5 +52,6 @@
    ]
   }
  ],
- "preorder_since": "2026-09-01"
+ "preorder_since": "2026-09-01",
+ "settings_tab": "_快報設定"
 }

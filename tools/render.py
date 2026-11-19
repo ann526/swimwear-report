@@ -48,7 +48,7 @@ def main(cut, _sheet=None):
                                      quad='動銷矩陣象限', mom='動能', action='建議動作', days='上架天數', stage='評估階段', score='綜合評估', rop='ROP', cum='累積銷售量').items()}
     build = json.load(open(os.path.join(OUT, 'build.json')))
     t2 = build['tab2']
-    state = json.load(open(os.path.join(ROOT, 'state', 'state.json')))
+    state = json.load(open(os.path.join(daily.STATE, 'state.json')))
     reported = set(state.get('reported_60d', []))
     items = []
     for r in v[2:]:
