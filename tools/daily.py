@@ -97,6 +97,15 @@ def load_results():
             ql[d['query']] = d['rows']
         elif isinstance(d, dict) and isinstance(d.get('data'), dict):
             gql.append(d['data'])
+            pr = d['data'].get('product')
+            if isinstance(pr, dict) and isinstance(pr.get('variants'), dict):   # GraphQL 版的庫存查詢
+                items = []
+                for v in pr['variants'].get('nodes', []):
+                    for lv in (((v.get('inventoryItem') or {}).get('inventoryLevels') or {}).get('nodes') or []):
+                        q = {x['name']: x['quantity'] for x in lv.get('quantities', [])}
+                        items.append({'sku': v.get('sku'), 'locationName': lv['location']['name'],
+                                      'onHand': q.get('on_hand', q.get('available', 0))})
+                if items: invlevels.append({'inventoryItems': items})
         elif isinstance(d, dict) and isinstance(d.get('content'), dict) and 'values' in d['content']:
             sheets.append(d['content'])
         elif isinstance(d, dict) and 'range' in d and 'values' in d:
@@ -487,9 +496,12 @@ if __name__ == '__main__':
         q, v = orders_query(cut)
         print('[orders]  graphql_query(first:100,有下一頁就帶 after 翻頁)\n' + q + '\nvariables: ' + json.dumps(v, ensure_ascii=False) + '\n')
         for p in CONF.get('inventory_patch_products', []):
-            print(f"[inventory]  get-inventory-levels productId={p['product_gid']}  ({', '.join(p['skus'])})\n")
+            print(f"[inventory]  get-inventory-levels productId={p['product_gid']}  ({', '.join(p['skus'])})")
+            print('  (沒有 get-inventory-levels 時改用 graphql_query)\n  { product(id: "' + p['product_gid'] + '") { title variants(first: 50) { nodes { sku inventoryItem { inventoryLevels(first: 20) { nodes { location { name } quantities(names: ["on_hand"]) { name quantity } } } } } } } }\n')
         print(f"[sheet]  get_values spreadsheetId={CONF['spreadsheet_id']} range='{CONF['sheets']['main']}'!{CONF['main_read_range']}")
-        print("[products]  search_products search_query=\"status:active created_at:>'" + (cut - dt.timedelta(3)).isoformat() + "'\" sort_key=CREATED_AT reverse=true first=50")
+        since = (cut - dt.timedelta(3)).isoformat()
+        print("[products]  search_products search_query=\"status:active created_at:>'" + since + "'\" sort_key=CREATED_AT reverse=true first=50")
+        print("  (沒有 search_products 時改用 graphql_query)\n  { products(first: 50, sortKey: CREATED_AT, reverse: true, query: \"status:active created_at:>'" + since + "'\") { edges { node { title status productType createdAt variants(first: 5) { edges { node { sku } } } } } } }")
     elif a.cmd == 'check':
         sys.exit(check())
     elif a.cmd == 'build':
